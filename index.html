@@ -57,23 +57,22 @@
       pointer-events: none;
     }
 
-    /* Der Nebel liegt dauerhaft über beiden Bildern und läuft ohne Unterbrechung weiter. */
+    /* Dauerhafter Nebel über beiden Bildern. Er wird niemals neu gestartet. */
     #fog {
       position: absolute;
-      inset: -18%;
+      inset: -14%;
       z-index: 3;
       overflow: hidden;
       pointer-events: none;
-      mix-blend-mode: screen;
-      opacity: 0.56;
+      opacity: 0.78;
     }
 
     .fog-layer {
       position: absolute;
       inset: 0;
-      filter: blur(30px);
       transform: translateZ(0);
       will-change: transform;
+      filter: blur(24px);
     }
 
     .fog-layer::before,
@@ -82,41 +81,42 @@
       position: absolute;
       inset: 0;
       background-repeat: repeat-x;
-      background-size: 52% 100%;
+      background-size: 62% 100%;
     }
 
     .fog-layer.one {
-      opacity: 0.42;
-      animation: fogLeft 36s linear infinite;
+      opacity: 0.60;
+      animation: fogLeft 31s linear infinite alternate;
     }
 
     .fog-layer.one::before {
       background-image:
-        radial-gradient(ellipse at 8% 63%, rgba(255,255,255,.36) 0 8%, rgba(255,255,255,.12) 20%, transparent 41%),
-        radial-gradient(ellipse at 47% 55%, rgba(255,255,255,.26) 0 8%, rgba(255,255,255,.09) 19%, transparent 40%),
-        radial-gradient(ellipse at 87% 69%, rgba(255,255,255,.32) 0 9%, rgba(255,255,255,.10) 19%, transparent 42%);
+        radial-gradient(ellipse at 4% 73%, rgba(226,226,226,.74) 0 7%, rgba(174,174,174,.38) 19%, transparent 39%),
+        radial-gradient(ellipse at 36% 68%, rgba(240,240,240,.66) 0 8%, rgba(170,170,170,.34) 21%, transparent 42%),
+        radial-gradient(ellipse at 72% 77%, rgba(218,218,218,.70) 0 8%, rgba(155,155,155,.34) 20%, transparent 40%),
+        radial-gradient(ellipse at 98% 64%, rgba(235,235,235,.62) 0 7%, rgba(165,165,165,.30) 19%, transparent 38%);
     }
 
     .fog-layer.two {
-      opacity: 0.28;
-      animation: fogRight 52s linear infinite;
+      opacity: 0.46;
+      animation: fogRight 43s linear infinite alternate;
     }
 
     .fog-layer.two::after {
       background-image:
-        radial-gradient(ellipse at 13% 38%, rgba(255,255,255,.27) 0 8%, rgba(255,255,255,.08) 20%, transparent 43%),
-        radial-gradient(ellipse at 56% 62%, rgba(255,255,255,.34) 0 9%, rgba(255,255,255,.10) 21%, transparent 45%),
-        radial-gradient(ellipse at 93% 43%, rgba(255,255,255,.23) 0 8%, rgba(255,255,255,.07) 18%, transparent 41%);
+        radial-gradient(ellipse at 12% 46%, rgba(205,205,205,.58) 0 8%, rgba(145,145,145,.28) 20%, transparent 42%),
+        radial-gradient(ellipse at 52% 58%, rgba(232,232,232,.62) 0 9%, rgba(155,155,155,.30) 22%, transparent 44%),
+        radial-gradient(ellipse at 88% 41%, rgba(205,205,205,.54) 0 8%, rgba(140,140,140,.26) 19%, transparent 41%);
     }
 
     @keyframes fogLeft {
-      from { transform: translate3d(-17%, 0, 0) scale(1.10); }
-      to   { transform: translate3d(17%, 0, 0) scale(1.10); }
+      from { transform: translate3d(-13%, 1%, 0) scale(1.08); }
+      to   { transform: translate3d(13%, -1%, 0) scale(1.12); }
     }
 
     @keyframes fogRight {
-      from { transform: translate3d(17%, 0, 0) scale(1.16); }
-      to   { transform: translate3d(-17%, 0, 0) scale(1.16); }
+      from { transform: translate3d(13%, -2%, 0) scale(1.14); }
+      to   { transform: translate3d(-13%, 2%, 0) scale(1.09); }
     }
 
     #particleCanvas {
@@ -388,9 +388,12 @@
       if (audioUnlocked) return;
 
       try {
-        const chosenTrack = gateActive ? musicTwo : musicOne;
-        chosenTrack.volume = 0;
-        await chosenTrack.play();
+        musicOne.volume = 0;
+        musicTwo.volume = 0;
+
+        /* Beide Audiodateien werden durch dieselbe echte Nutzeraktion entsperrt. */
+        await Promise.all([musicOne.play(), musicTwo.play()]);
+
         audioUnlocked = true;
         soundHint.classList.add("hidden");
         startAudioFade();
@@ -412,14 +415,14 @@
       const targetOne = gateActive ? 0 : MUSIC_MAX_VOLUME;
       const targetTwo = gateActive ? MUSIC_MAX_VOLUME : 0;
 
-      if (targetOne > 0 && musicOne.paused) musicOne.play().catch(() => {});
-      if (targetTwo > 0 && musicTwo.paused) musicTwo.play().catch(() => {});
+      /* Beide Titel bleiben nach dem ersten Klick dauerhaft aktiv.
+         Nur die Lautstärken wechseln. Dadurch funktioniert jeder Hover-Wechsel
+         beliebig oft und wird nicht erneut durch Browser-Autoplay blockiert. */
+      if (musicOne.paused) musicOne.play().catch(() => {});
+      if (musicTwo.paused) musicTwo.play().catch(() => {});
 
       musicOne.volume = moveToward(musicOne.volume, targetOne, step);
       musicTwo.volume = moveToward(musicTwo.volume, targetTwo, step);
-
-      if (musicOne.volume === 0 && targetOne === 0 && !musicOne.paused) musicOne.pause();
-      if (musicTwo.volume === 0 && targetTwo === 0 && !musicTwo.paused) musicTwo.pause();
 
       const finished = musicOne.volume === targetOne && musicTwo.volume === targetTwo;
       if (finished) {
