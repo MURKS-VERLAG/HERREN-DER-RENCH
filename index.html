@@ -518,6 +518,11 @@
 
 
     /* Beide Jörg-Bilder werden vorgeladen; nur eines ist jeweils sichtbar. */
+    #joergPlayer {
+      opacity: 1;
+      visibility: visible;
+    }
+
     #joergHoldPlayer {
       width: clamp(118px, 16.2%, 250px);
       opacity: 0;
@@ -1182,9 +1187,15 @@
       spacePressed = false;
       spaceHeld = false;
       playerAttacking = false;
-      joergPlayer.src = "joerg-farbig.png?v=4";
-      joergPlayer.classList.remove("hidden-for-hold", "attacking");
+
       joergHoldPlayer.classList.remove("visible");
+      joergPlayer.classList.remove("hidden-for-hold", "attacking");
+
+      joergHoldPlayer.style.opacity = "0";
+      joergHoldPlayer.style.visibility = "hidden";
+
+      joergPlayer.style.opacity = "1";
+      joergPlayer.style.visibility = "visible";
     }
 
     function startSpaceAction() {
@@ -1229,11 +1240,16 @@
       spacePressed = false;
       spaceHeld = false;
 
-      joergPlayer.src = "joerg-farbig.png?v=4";
-      joergPlayer.classList.remove("hidden-for-hold");
-      joergHoldPlayer.classList.remove("visible");
-
       if (wasHeld) {
+        joergHoldPlayer.classList.remove("visible");
+        joergPlayer.classList.remove("hidden-for-hold");
+
+        joergHoldPlayer.style.opacity = "0";
+        joergHoldPlayer.style.visibility = "hidden";
+
+        joergPlayer.style.opacity = "1";
+        joergPlayer.style.visibility = "visible";
+
         playerAttacking = false;
         updatePlayerVisual();
         return;
