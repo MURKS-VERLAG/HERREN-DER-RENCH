@@ -383,6 +383,99 @@
       transform: scale(1.045);
     }
 
+
+    /* Spielszene: Der Straßburger Warenzug. */
+    #warenzugScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #000;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 440ms ease-in-out, visibility 0s linear 440ms;
+    }
+
+    #warenzugScreen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 440ms ease-in-out;
+    }
+
+    #warenzugWorld {
+      position: relative;
+      width: min(100vw, calc(100vh * 3 / 2));
+      height: min(100vh, calc(100vw * 2 / 3));
+      overflow: hidden;
+      background: #000;
+      isolation: isolate;
+    }
+
+    #warenzugBackground {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    #joergPlayer {
+      position: absolute;
+      z-index: 3;
+      left: 10%;
+      bottom: 24.8%;
+      width: clamp(105px, 14.5%, 225px);
+      height: auto;
+      display: block;
+      transform-origin: 50% 100%;
+      user-select: none;
+      pointer-events: none;
+      will-change: left, bottom, transform;
+      filter: drop-shadow(0 5px 4px rgba(0,0,0,.28));
+    }
+
+    #joergPlayer.facing-left {
+      transform: scaleX(-1);
+    }
+
+    #joergPlayer.ducking {
+      transform: scaleY(.63);
+    }
+
+    #joergPlayer.facing-left.ducking {
+      transform: scaleX(-1) scaleY(.63);
+    }
+
+    #joergPlayer.attacking {
+      animation: joergMaceStrike 310ms ease-in-out;
+    }
+
+    #joergPlayer.facing-left.attacking {
+      animation: joergMaceStrikeLeft 310ms ease-in-out;
+    }
+
+    @keyframes joergMaceStrike {
+      0%   { transform: rotate(0deg) translateX(0); }
+      38%  { transform: rotate(-7deg) translateX(1.5%); }
+      68%  { transform: rotate(6deg) translateX(4%); }
+      100% { transform: rotate(0deg) translateX(0); }
+    }
+
+    @keyframes joergMaceStrikeLeft {
+      0%   { transform: scaleX(-1) rotate(0deg) translateX(0); }
+      38%  { transform: scaleX(-1) rotate(-7deg) translateX(1.5%); }
+      68%  { transform: scaleX(-1) rotate(6deg) translateX(4%); }
+      100% { transform: scaleX(-1) rotate(0deg) translateX(0); }
+    }
+
   </style>
 </head>
 <body>
@@ -439,6 +532,13 @@
     <audio id="selectionMusic" src="musik-auswahlbildschirm.mp3" preload="auto" loop></audio>
   </section>
 
+  <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
+    <div id="warenzugWorld">
+      <img id="warenzugBackground" src="warenzug-ebene.png" alt="">
+      <img id="joergPlayer" src="joerg-farbig.png" alt="Jörg">
+    </div>
+  </section>
+
   <script>
     "use strict";
 
@@ -465,6 +565,10 @@
     const swordClang = document.getElementById("swordClang");
     const gateSound = document.getElementById("gateSound");
     const selectionMusic = document.getElementById("selectionMusic");
+    const titleHotspotTwo = document.getElementById("titleHotspotTwo");
+    const warenzugScreen = document.getElementById("warenzugScreen");
+    const warenzugWorld = document.getElementById("warenzugWorld");
+    const joergPlayer = document.getElementById("joergPlayer");
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -486,6 +590,16 @@
     let selectionOpen = false;
     let selectionTransitioning = false;
     let openSelectionWhenReady = false;
+    let warenzugOpen = false;
+    let gameFrameRequest = null;
+    let gamePreviousTime = performance.now();
+    let playerX = 0.10;
+    let playerY = 0;
+    let playerVelocityY = 0;
+    let playerFacing = 1;
+    let playerGrounded = true;
+    let playerAttacking = false;
+    const gameKeys = new Set();
 
     musicOne.volume = 0;
     musicTwo.volume = 0;
@@ -794,7 +908,7 @@
 
         const targetSelection = isMuted
           ? 0
-          : selectionOpen
+          : (selectionOpen || warenzugOpen)
             ? MUSIC_MAX_VOLUME
             : 0;
 
@@ -888,6 +1002,141 @@
       }
     });
 
+
+
+    function openWarenzugScreen() {
+      if (warenzugOpen || selectionTransitioning) return;
+
+      selectionTransitioning = true;
+      warenzugOpen = true;
+
+      /* Neue Szene liegt bereits bereit, während die Auswahl weich ausblendet. */
+      warenzugScreen.classList.add("active");
+      warenzugScreen.setAttribute("aria-hidden", "false");
+      selectionScreen.classList.remove("active");
+      selectionScreen.setAttribute("aria-hidden", "true");
+
+      playerX = 0.10;
+      playerY = 0;
+      playerVelocityY = 0;
+      playerFacing = 1;
+      playerGrounded = true;
+      gameKeys.clear();
+      updatePlayerVisual();
+      requestGameFrame();
+
+      window.setTimeout(() => {
+        selectionOpen = false;
+        selectionTransitioning = false;
+      }, 460);
+    }
+
+    function requestGameFrame() {
+      if (gameFrameRequest === null) {
+        gamePreviousTime = performance.now();
+        gameFrameRequest = requestAnimationFrame(updateGame);
+      }
+    }
+
+    function updateGame(currentTime) {
+      const delta = Math.min(0.034, (currentTime - gamePreviousTime) / 1000);
+      gamePreviousTime = currentTime;
+
+      if (!warenzugOpen) {
+        gameFrameRequest = null;
+        return;
+      }
+
+      const movingLeft = gameKeys.has("KeyA");
+      const movingRight = gameKeys.has("KeyD");
+      const ducking = gameKeys.has("KeyS") && playerGrounded;
+      const horizontalDirection = (movingRight ? 1 : 0) - (movingLeft ? 1 : 0);
+
+      if (!ducking && horizontalDirection !== 0) {
+        const movementSpeed = 0.235;
+        playerX += horizontalDirection * movementSpeed * delta;
+        playerFacing = horizontalDirection;
+      }
+
+      const playerWidthRatio = joergPlayer.offsetWidth / Math.max(1, warenzugWorld.clientWidth);
+      playerX = Math.max(0.015, Math.min(0.985 - playerWidthRatio, playerX));
+
+      if (!playerGrounded) {
+        const gravity = 2.25;
+        playerVelocityY -= gravity * delta;
+        playerY += playerVelocityY * delta;
+
+        if (playerY <= 0) {
+          playerY = 0;
+          playerVelocityY = 0;
+          playerGrounded = true;
+        }
+      }
+
+      joergPlayer.classList.toggle("ducking", ducking && !playerAttacking);
+      updatePlayerVisual();
+
+      gameFrameRequest = requestAnimationFrame(updateGame);
+    }
+
+    function updatePlayerVisual() {
+      joergPlayer.style.left = `${playerX * 100}%`;
+      joergPlayer.style.bottom = `calc(24.8% + ${playerY * 100}%)`;
+      joergPlayer.classList.toggle("facing-left", playerFacing < 0);
+    }
+
+    function jumpPlayer() {
+      if (!warenzugOpen || !playerGrounded || gameKeys.has("KeyS")) return;
+      playerGrounded = false;
+      playerVelocityY = 0.82;
+      requestGameFrame();
+    }
+
+    function strikeWithMace() {
+      if (!warenzugOpen || playerAttacking) return;
+
+      playerAttacking = true;
+      joergPlayer.classList.remove("ducking");
+      joergPlayer.classList.add("attacking");
+
+      window.setTimeout(() => {
+        joergPlayer.classList.remove("attacking");
+        playerAttacking = false;
+      }, 320);
+    }
+
+    titleHotspotTwo.addEventListener("click", event => {
+      event.preventDefault();
+      openWarenzugScreen();
+    });
+
+    document.addEventListener("keydown", event => {
+      if (!warenzugOpen) return;
+
+      if (["KeyA", "KeyD", "KeyW", "KeyS", "Space"].includes(event.code)) {
+        event.preventDefault();
+      }
+
+      if (event.code === "KeyW" && !event.repeat) {
+        jumpPlayer();
+      }
+
+      if (event.code === "Space" && !event.repeat) {
+        strikeWithMace();
+      }
+
+      gameKeys.add(event.code);
+      requestGameFrame();
+    });
+
+    document.addEventListener("keyup", event => {
+      if (!warenzugOpen) return;
+      gameKeys.delete(event.code);
+    });
+
+    window.addEventListener("blur", () => {
+      if (warenzugOpen) gameKeys.clear();
+    });
 
     function playEffect(audioElement) {
       if (isMuted || !audioElement) return;
