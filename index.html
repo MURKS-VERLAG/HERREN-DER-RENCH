@@ -427,7 +427,8 @@
       user-select: none;
     }
 
-    #joergPlayer {
+    #joergPlayer,
+    #joergHoldPlayer {
       position: absolute;
       z-index: 3;
       left: 10%;
@@ -442,7 +443,8 @@
       filter: drop-shadow(0 5px 4px rgba(0,0,0,.28));
     }
 
-    #joergPlayer.facing-left {
+    #joergPlayer.facing-left,
+    #joergHoldPlayer.facing-left {
       transform: scaleX(-1);
     }
 
@@ -515,13 +517,24 @@
     }
 
 
-    /* Gehaltene Leertaste: separate Ausholpose, gleiche Bodenlinie. */
-    #joergPlayer.holding-strike {
+    /* Beide Jörg-Bilder werden vorgeladen; nur eines ist jeweils sichtbar. */
+    #joergHoldPlayer {
       width: clamp(118px, 16.2%, 250px);
-      transform-origin: 50% 100%;
+      opacity: 0;
+      visibility: hidden;
     }
 
-    #joergPlayer.holding-strike.facing-left {
+    #joergHoldPlayer.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #joergPlayer.hidden-for-hold {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    #joergHoldPlayer.facing-left {
       transform: scaleX(-1);
     }
 
@@ -584,7 +597,8 @@
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
     <div id="warenzugWorld">
       <img id="warenzugBackground" src="warenzug-ebene.png" alt="">
-      <img id="joergPlayer" src="joerg-farbig.png" alt="Jörg">
+      <img id="joergPlayer" src="joerg-farbig.png?v=4" alt="Jörg">
+      <img id="joergHoldPlayer" src="joerg-schlag-ausholen.png?v=4" alt="" aria-hidden="true">
 
       <button id="gameReturnHotspot" type="button" aria-label="Zurück zur Auswahl" title="Zurück zur Auswahl">
         <img id="gameReturnGate" src="torhaus-zurueck.png" alt="">
@@ -622,6 +636,7 @@
     const warenzugScreen = document.getElementById("warenzugScreen");
     const warenzugWorld = document.getElementById("warenzugWorld");
     const joergPlayer = document.getElementById("joergPlayer");
+    const joergHoldPlayer = document.getElementById("joergHoldPlayer");
     const gameReturnHotspot = document.getElementById("gameReturnHotspot");
 
     const imageContext = imageCanvas.getContext("2d");
@@ -654,6 +669,12 @@
     let playerGrounded = true;
     let playerAttacking = false;
     const gameKeys = new Set();
+
+    const joergNormalPreload = new Image();
+    joergNormalPreload.src = "joerg-farbig.png?v=4";
+    const joergHoldPreload = new Image();
+    joergHoldPreload.src = "joerg-schlag-ausholen.png?v=4";
+
     const SPACE_HOLD_DELAY = 220;
     let spacePressed = false;
     let spaceHeld = false;
@@ -1139,9 +1160,16 @@
     }
 
     function updatePlayerVisual() {
-      joergPlayer.style.left = `${playerX * 100}%`;
-      joergPlayer.style.bottom = `calc(24.8% + ${playerY * 100}%)`;
+      const left = `${playerX * 100}%`;
+      const bottom = `calc(24.8% + ${playerY * 100}%)`;
+
+      joergPlayer.style.left = left;
+      joergPlayer.style.bottom = bottom;
+      joergHoldPlayer.style.left = left;
+      joergHoldPlayer.style.bottom = bottom;
+
       joergPlayer.classList.toggle("facing-left", playerFacing < 0);
+      joergHoldPlayer.classList.toggle("facing-left", playerFacing < 0);
     }
 
 
@@ -1154,8 +1182,9 @@
       spacePressed = false;
       spaceHeld = false;
       playerAttacking = false;
-      joergPlayer.src = "joerg-farbig.png";
-      joergPlayer.classList.remove("holding-strike", "attacking");
+      joergPlayer.src = "joerg-farbig.png?v=4";
+      joergPlayer.classList.remove("hidden-for-hold", "attacking");
+      joergHoldPlayer.classList.remove("visible");
     }
 
     function startSpaceAction() {
@@ -1181,8 +1210,8 @@
         gameKeys.delete("KeyS");
 
         joergPlayer.classList.remove("ducking", "attacking");
-        joergPlayer.classList.add("holding-strike");
-        joergPlayer.src = "joerg-schlag-ausholen.png";
+        joergPlayer.classList.add("hidden-for-hold");
+        joergHoldPlayer.classList.add("visible");
         updatePlayerVisual();
       }, SPACE_HOLD_DELAY);
     }
@@ -1200,8 +1229,9 @@
       spacePressed = false;
       spaceHeld = false;
 
-      joergPlayer.src = "joerg-farbig.png";
-      joergPlayer.classList.remove("holding-strike");
+      joergPlayer.src = "joerg-farbig.png?v=4";
+      joergPlayer.classList.remove("hidden-for-hold");
+      joergHoldPlayer.classList.remove("visible");
 
       if (wasHeld) {
         playerAttacking = false;
@@ -1292,7 +1322,8 @@
       playerGrounded = true;
       playerAttacking = false;
       resetSpaceAction();
-      joergPlayer.classList.remove("ducking", "attacking", "holding-strike", "facing-left");
+      joergPlayer.classList.remove("ducking", "attacking", "hidden-for-hold", "facing-left");
+      joergHoldPlayer.classList.remove("visible", "facing-left");
       updatePlayerVisual();
 
       /* Auswahlbildschirm bereits vollständig vorbereiten. */
