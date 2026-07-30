@@ -476,6 +476,44 @@
       100% { transform: scaleX(-1) rotate(0deg) translateX(0); }
     }
 
+
+    /* Rückweg aus der Warenzug-Spielszene. */
+    #gameReturnHotspot {
+      position: absolute;
+      z-index: 8;
+      left: 2.5%;
+      bottom: 2.5%;
+      width: clamp(60px, 7.5%, 110px);
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #gameReturnGate {
+      width: 100%;
+      height: auto;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      transform-origin: 50% 100%;
+      transition:
+        transform 180ms ease,
+        filter 180ms ease;
+    }
+
+    #gameReturnHotspot:hover #gameReturnGate,
+    #gameReturnHotspot:focus-visible #gameReturnGate {
+      transform: scale(1.045);
+      filter:
+        brightness(1.18)
+        drop-shadow(0 0 8px rgba(255,255,255,.55))
+        drop-shadow(0 0 18px rgba(255,255,255,.28));
+    }
+
   </style>
 </head>
 <body>
@@ -536,6 +574,10 @@
     <div id="warenzugWorld">
       <img id="warenzugBackground" src="warenzug-ebene.png" alt="">
       <img id="joergPlayer" src="joerg-farbig.png" alt="Jörg">
+
+      <button id="gameReturnHotspot" type="button" aria-label="Zurück zur Auswahl" title="Zurück zur Auswahl">
+        <img id="gameReturnGate" src="torhaus-zurueck.png" alt="">
+      </button>
     </div>
   </section>
 
@@ -569,6 +611,7 @@
     const warenzugScreen = document.getElementById("warenzugScreen");
     const warenzugWorld = document.getElementById("warenzugWorld");
     const joergPlayer = document.getElementById("joergPlayer");
+    const gameReturnHotspot = document.getElementById("gameReturnHotspot");
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -908,7 +951,7 @@
 
         const targetSelection = isMuted
           ? 0
-          : (selectionOpen || warenzugOpen)
+          : (selectionOpen && !warenzugOpen)
             ? MUSIC_MAX_VOLUME
             : 0;
 
@@ -1136,6 +1179,48 @@
 
     window.addEventListener("blur", () => {
       if (warenzugOpen) gameKeys.clear();
+    });
+
+
+    function closeWarenzugScreen() {
+      if (!warenzugOpen || selectionTransitioning) return;
+
+      selectionTransitioning = true;
+
+      /* Steuerung und Spielfigur vor dem Übergang sauber zurücksetzen. */
+      warenzugOpen = false;
+      gameKeys.clear();
+      playerX = 0.10;
+      playerY = 0;
+      playerVelocityY = 0;
+      playerFacing = 1;
+      playerGrounded = true;
+      playerAttacking = false;
+      joergPlayer.classList.remove("ducking", "attacking", "facing-left");
+      updatePlayerVisual();
+
+      /* Auswahlbildschirm bereits vollständig vorbereiten. */
+      selectionOpen = true;
+      selectionScreen.classList.add("active");
+      selectionScreen.setAttribute("aria-hidden", "false");
+
+      /* Danach Spielszene weich ausblenden. */
+      requestAnimationFrame(() => {
+        warenzugScreen.classList.remove("active");
+        warenzugScreen.setAttribute("aria-hidden", "true");
+      });
+
+      window.setTimeout(() => {
+        selectionTransitioning = false;
+      }, 460);
+    }
+
+    gameReturnHotspot.addEventListener("pointerenter", () => playEffect(gateSound));
+    gameReturnHotspot.addEventListener("focus", () => playEffect(gateSound));
+
+    gameReturnHotspot.addEventListener("click", event => {
+      event.preventDefault();
+      closeWarenzugScreen();
     });
 
     function playEffect(audioElement) {
