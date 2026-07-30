@@ -5,11 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Die Herren der Rench</title>
   <style>
-    :root {
-      --reveal-time: 3600ms;
-      --return-time: 2800ms;
-    }
-
     * { box-sizing: border-box; }
 
     html, body {
@@ -25,10 +20,6 @@
       place-items: center;
     }
 
-    /*
-      Die Bühne benutzt das Seitenverhältnis von Bild 1.
-      Das vollständige Motiv bleibt immer sichtbar; freie Fläche bleibt schwarz.
-    */
     #stage {
       position: relative;
       width: min(100vw, calc(100vh * 1345 / 948));
@@ -49,36 +40,93 @@
       display: block;
     }
 
-    /* Bild 2 liegt permanent unverändert unter Bild 1. */
     #bild2 {
       z-index: 1;
       object-fit: fill;
       pointer-events: none;
     }
 
-    /* Nur als unveränderte Bildquelle für das Canvas; selbst unsichtbar. */
     #bild1Source {
       z-index: 0;
       opacity: 0;
       pointer-events: none;
     }
 
-    /* Sichtbares Bild 1. Es wird ausschließlich über das Canvas abgetragen. */
     #bild1Canvas {
       z-index: 2;
       pointer-events: none;
     }
 
-    /* Dezente Brösel und Staubpartikel. */
-    #particleCanvas {
+    /* Der Nebel liegt dauerhaft über beiden Bildern und läuft ohne Unterbrechung weiter. */
+    #fog {
+      position: absolute;
+      inset: -18%;
       z-index: 3;
+      overflow: hidden;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      opacity: 0.56;
+    }
+
+    .fog-layer {
+      position: absolute;
+      inset: 0;
+      filter: blur(30px);
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .fog-layer::before,
+    .fog-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-repeat: repeat-x;
+      background-size: 52% 100%;
+    }
+
+    .fog-layer.one {
+      opacity: 0.42;
+      animation: fogLeft 36s linear infinite;
+    }
+
+    .fog-layer.one::before {
+      background-image:
+        radial-gradient(ellipse at 8% 63%, rgba(255,255,255,.36) 0 8%, rgba(255,255,255,.12) 20%, transparent 41%),
+        radial-gradient(ellipse at 47% 55%, rgba(255,255,255,.26) 0 8%, rgba(255,255,255,.09) 19%, transparent 40%),
+        radial-gradient(ellipse at 87% 69%, rgba(255,255,255,.32) 0 9%, rgba(255,255,255,.10) 19%, transparent 42%);
+    }
+
+    .fog-layer.two {
+      opacity: 0.28;
+      animation: fogRight 52s linear infinite;
+    }
+
+    .fog-layer.two::after {
+      background-image:
+        radial-gradient(ellipse at 13% 38%, rgba(255,255,255,.27) 0 8%, rgba(255,255,255,.08) 20%, transparent 43%),
+        radial-gradient(ellipse at 56% 62%, rgba(255,255,255,.34) 0 9%, rgba(255,255,255,.10) 21%, transparent 45%),
+        radial-gradient(ellipse at 93% 43%, rgba(255,255,255,.23) 0 8%, rgba(255,255,255,.07) 18%, transparent 41%);
+    }
+
+    @keyframes fogLeft {
+      from { transform: translate3d(-17%, 0, 0) scale(1.10); }
+      to   { transform: translate3d(17%, 0, 0) scale(1.10); }
+    }
+
+    @keyframes fogRight {
+      from { transform: translate3d(17%, 0, 0) scale(1.16); }
+      to   { transform: translate3d(-17%, 0, 0) scale(1.16); }
+    }
+
+    #particleCanvas {
+      z-index: 4;
       pointer-events: none;
     }
 
-    /* Unsichtbarer Hoverbereich exakt über dem Burgtor unter der roten Schrift. */
     #gateHotspot {
       position: absolute;
-      z-index: 4;
+      z-index: 6;
       left: 40.3%;
       top: 59.2%;
       width: 19.2%;
@@ -91,6 +139,29 @@
       outline: none;
       -webkit-tap-highlight-color: transparent;
     }
+
+    /* Kleiner Hinweis, weil Browser Musik erst nach einem Klick erlauben. */
+    #soundHint {
+      position: absolute;
+      z-index: 7;
+      left: 50%;
+      bottom: 2.2%;
+      transform: translateX(-50%);
+      padding: 8px 13px;
+      border: 1px solid rgba(255,255,255,.38);
+      background: rgba(0,0,0,.62);
+      color: rgba(255,255,255,.88);
+      font: 600 12px/1.1 Georgia, serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity .5s ease;
+    }
+
+    #soundHint.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -98,8 +169,18 @@
     <img id="bild2" src="bild-2.jpg" alt="">
     <img id="bild1Source" src="bild-1.jpg" alt="">
     <canvas id="bild1Canvas" aria-hidden="true"></canvas>
+
+    <div id="fog" aria-hidden="true">
+      <div class="fog-layer one"></div>
+      <div class="fog-layer two"></div>
+    </div>
+
     <canvas id="particleCanvas" aria-hidden="true"></canvas>
     <button id="gateHotspot" type="button" aria-label="Burgtor"></button>
+    <button id="soundHint" type="button">Klick für Musik</button>
+
+    <audio id="musicOne" src="musik-bild-1.mp3" preload="auto" loop></audio>
+    <audio id="musicTwo" src="musik-bild-2.mp3" preload="auto" loop></audio>
   </main>
 
   <script>
@@ -110,12 +191,17 @@
     const EDGE_COLUMNS = 84;
     const EDGE_DEPTH = 0.030;
     const PARTICLE_LIMIT = 260;
+    const MUSIC_MAX_VOLUME = 0.72;
+    const MUSIC_FADE_SECONDS = 2.4;
 
     const stage = document.getElementById("stage");
     const imageOne = document.getElementById("bild1Source");
     const imageCanvas = document.getElementById("bild1Canvas");
     const particleCanvas = document.getElementById("particleCanvas");
     const gateHotspot = document.getElementById("gateHotspot");
+    const soundHint = document.getElementById("soundHint");
+    const musicOne = document.getElementById("musicOne");
+    const musicTwo = document.getElementById("musicTwo");
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -128,8 +214,14 @@
     let previousTime = performance.now();
     let frameRequest = null;
     let particles = [];
+    let audioUnlocked = false;
+    let gateActive = false;
+    let audioFrame = null;
+    let audioPreviousTime = performance.now();
 
-    /* Feste Zufallswerte sorgen für eine organische, aber stabile Bruchkante. */
+    musicOne.volume = 0;
+    musicTwo.volume = 0;
+
     const edgeNoise = Array.from({ length: EDGE_COLUMNS + 1 }, (_, index) => {
       const waveA = Math.sin(index * 1.91) * 0.52;
       const waveB = Math.sin(index * 4.27 + 0.8) * 0.28;
@@ -166,17 +258,11 @@
     function drawImageOne() {
       imageContext.clearRect(0, 0, width, height);
 
-      if (!imageOne.complete || imageOne.naturalWidth === 0 || progress >= 1) {
-        return;
-      }
+      if (!imageOne.complete || imageOne.naturalWidth === 0 || progress >= 1) return;
 
       imageContext.drawImage(imageOne, 0, 0, width, height);
+      if (progress <= 0) return;
 
-      if (progress <= 0) {
-        return;
-      }
-
-      /* Alles oberhalb der unregelmäßigen Bruchkante wird transparent. */
       imageContext.save();
       imageContext.globalCompositeOperation = "destination-out";
       imageContext.beginPath();
@@ -191,7 +277,6 @@
       imageContext.closePath();
       imageContext.fill();
 
-      /* Kleine ausgefressene Stellen direkt an der Kante. */
       const craterCount = Math.round(22 + 58 * Math.sin(progress * Math.PI));
       for (let index = 0; index < craterCount; index += 1) {
         const x = ((index * 47.3) % 100) / 100 * width;
@@ -242,9 +327,7 @@
       }
 
       particles = particles.filter(particle =>
-        particle.life > 0 &&
-        particle.alpha > 0.01 &&
-        particle.y < height + 20
+        particle.life > 0 && particle.alpha > 0.01 && particle.y < height + 20
       );
     }
 
@@ -288,7 +371,6 @@
       }
 
       progress = Math.max(0, Math.min(1, progress));
-
       drawImageOne();
       spawnParticles(movingForward ? 1 : -1);
       updateParticles();
@@ -302,22 +384,75 @@
       }
     }
 
-    gateHotspot.addEventListener("pointerenter", () => {
-      targetProgress = 1;
-      requestAnimation();
-    });
+    async function unlockAudio() {
+      if (audioUnlocked) return;
 
-    gateHotspot.addEventListener("pointerleave", () => {
-      targetProgress = 0;
+      try {
+        const chosenTrack = gateActive ? musicTwo : musicOne;
+        chosenTrack.volume = 0;
+        await chosenTrack.play();
+        audioUnlocked = true;
+        soundHint.classList.add("hidden");
+        startAudioFade();
+      } catch (error) {
+        soundHint.classList.remove("hidden");
+      }
+    }
+
+    function startAudioFade() {
+      if (!audioUnlocked || audioFrame !== null) return;
+      audioPreviousTime = performance.now();
+      audioFrame = requestAnimationFrame(updateAudioFade);
+    }
+
+    function updateAudioFade(now) {
+      const elapsedSeconds = Math.min(0.05, (now - audioPreviousTime) / 1000);
+      audioPreviousTime = now;
+      const step = (MUSIC_MAX_VOLUME / MUSIC_FADE_SECONDS) * elapsedSeconds;
+      const targetOne = gateActive ? 0 : MUSIC_MAX_VOLUME;
+      const targetTwo = gateActive ? MUSIC_MAX_VOLUME : 0;
+
+      if (targetOne > 0 && musicOne.paused) musicOne.play().catch(() => {});
+      if (targetTwo > 0 && musicTwo.paused) musicTwo.play().catch(() => {});
+
+      musicOne.volume = moveToward(musicOne.volume, targetOne, step);
+      musicTwo.volume = moveToward(musicTwo.volume, targetTwo, step);
+
+      if (musicOne.volume === 0 && targetOne === 0 && !musicOne.paused) musicOne.pause();
+      if (musicTwo.volume === 0 && targetTwo === 0 && !musicTwo.paused) musicTwo.pause();
+
+      const finished = musicOne.volume === targetOne && musicTwo.volume === targetTwo;
+      if (finished) {
+        audioFrame = null;
+      } else {
+        audioFrame = requestAnimationFrame(updateAudioFade);
+      }
+    }
+
+    function moveToward(current, target, amount) {
+      if (current < target) return Math.min(target, current + amount);
+      if (current > target) return Math.max(target, current - amount);
+      return target;
+    }
+
+    function setGateActive(active) {
+      gateActive = active;
+      targetProgress = active ? 1 : 0;
       requestAnimation();
-    });
+      startAudioFade();
+    }
+
+    gateHotspot.addEventListener("pointerenter", () => setGateActive(true));
+    gateHotspot.addEventListener("pointerleave", () => setGateActive(false));
+
+    soundHint.addEventListener("click", unlockAudio);
+    document.addEventListener("pointerdown", unlockAudio, { once: true });
+    document.addEventListener("keydown", unlockAudio, { once: true });
 
     imageOne.addEventListener("load", resizeCanvases);
     window.addEventListener("resize", resizeCanvases);
 
-    if (imageOne.complete) {
-      resizeCanvases();
-    }
+    if (imageOne.complete) resizeCanvases();
   </script>
 </body>
 </html>
