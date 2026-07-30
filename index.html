@@ -445,8 +445,7 @@
     }
 
     #joergPlayer.facing-left,
-    #joergHoldPlayer.facing-left,
-    #joergGroundPlayer.facing-left {
+    #joergHoldPlayer.facing-left {
       transform: scaleX(-1);
     }
 
@@ -532,9 +531,10 @@
     }
 
     #joergGroundPlayer {
-      width: clamp(145px, 20.0%, 310px);
+      width: clamp(118px, 16.2%, 250px);
       opacity: 0;
       visibility: hidden;
+      transform: scaleX(-1);
     }
 
     #joergHoldPlayer.visible,
@@ -548,9 +548,12 @@
       visibility: hidden;
     }
 
-    #joergHoldPlayer.facing-left,
-    #joergGroundPlayer.facing-left {
+    #joergHoldPlayer.facing-left {
       transform: scaleX(-1);
+    }
+
+    #joergGroundPlayer.facing-left {
+      transform: scaleX(1);
     }
 
   </style>
@@ -1187,8 +1190,8 @@
       joergPlayer.style.bottom = bottom;
       joergHoldPlayer.style.left = left;
       joergHoldPlayer.style.bottom = bottom;
-      joergGroundPlayer.style.left = left;
-      joergGroundPlayer.style.bottom = bottom;
+      joergGroundPlayer.style.left = `calc(${playerX * 100}% - 0.85%)`;
+      joergGroundPlayer.style.bottom = `calc(22.8% + ${playerY * 100}%)`;
 
       joergPlayer.classList.toggle("facing-left", playerFacing < 0);
       joergHoldPlayer.classList.toggle("facing-left", playerFacing < 0);
