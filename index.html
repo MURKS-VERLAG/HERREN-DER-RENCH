@@ -31,8 +31,8 @@
     */
     #stage {
       position: relative;
-      width: min(100vw, calc(100vh * 1345 / 948));
-      height: min(100vh, calc(100vw * 948 / 1345));
+      width: min(100vw, calc(100vh * 2690 / 1896));
+      height: min(100vh, calc(100vw * 1896 / 2690));
       overflow: hidden;
       background: #000;
       isolation: isolate;
@@ -41,6 +41,66 @@
     #bild2,
     #bild1Source,
     #bild1Canvas,
+    #fog {
+      position: absolute;
+      inset: -18%;
+      z-index: 3;
+      overflow: hidden;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      opacity: 0.66;
+    }
+
+    .fog-layer {
+      position: absolute;
+      inset: 0;
+      filter: blur(30px);
+      will-change: transform;
+    }
+
+    .fog-layer::before,
+    .fog-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-repeat: repeat-x;
+      background-size: 52% 100%;
+    }
+
+    .fog-layer.one {
+      opacity: 0.30;
+      animation: fogMoveLeft 38s linear infinite;
+    }
+
+    .fog-layer.one::before {
+      background-image:
+        radial-gradient(ellipse at 12% 65%, rgba(255,255,255,.34) 0 8%, rgba(255,255,255,.12) 19%, transparent 40%),
+        radial-gradient(ellipse at 52% 58%, rgba(255,255,255,.27) 0 8%, rgba(255,255,255,.09) 20%, transparent 42%),
+        radial-gradient(ellipse at 90% 70%, rgba(255,255,255,.31) 0 7%, rgba(255,255,255,.10) 19%, transparent 40%);
+    }
+
+    .fog-layer.two {
+      opacity: 0.22;
+      animation: fogMoveRight 57s linear infinite;
+    }
+
+    .fog-layer.two::after {
+      background-image:
+        radial-gradient(ellipse at 7% 43%, rgba(255,255,255,.24) 0 7%, rgba(255,255,255,.08) 19%, transparent 42%),
+        radial-gradient(ellipse at 48% 68%, rgba(255,255,255,.31) 0 8%, rgba(255,255,255,.10) 22%, transparent 44%),
+        radial-gradient(ellipse at 86% 49%, rgba(255,255,255,.22) 0 8%, rgba(255,255,255,.07) 18%, transparent 40%);
+    }
+
+    @keyframes fogMoveLeft {
+      from { transform: translate3d(-17%, 0, 0) scale(1.08); }
+      to   { transform: translate3d(17%, 0, 0) scale(1.08); }
+    }
+
+    @keyframes fogMoveRight {
+      from { transform: translate3d(17%, 0, 0) scale(1.14); }
+      to   { transform: translate3d(-17%, 0, 0) scale(1.14); }
+    }
+
     #particleCanvas {
       position: absolute;
       inset: 0;
@@ -71,14 +131,14 @@
 
     /* Dezente Brösel und Staubpartikel. */
     #particleCanvas {
-      z-index: 3;
+      z-index: 4;
       pointer-events: none;
     }
 
     /* Unsichtbarer Hoverbereich exakt über dem Burgtor unter der roten Schrift. */
     #gateHotspot {
       position: absolute;
-      z-index: 4;
+      z-index: 5;
       left: 40.3%;
       top: 59.2%;
       width: 19.2%;
@@ -99,6 +159,10 @@
     <img id="bild1Source" src="bild-1.jpg" alt="">
     <canvas id="bild1Canvas" aria-hidden="true"></canvas>
     <canvas id="particleCanvas" aria-hidden="true"></canvas>
+    <div id="fog" aria-hidden="true">
+      <div class="fog-layer one"></div>
+      <div class="fog-layer two"></div>
+    </div>
     <button id="gateHotspot" type="button" aria-label="Burgtor"></button>
   </main>
 
