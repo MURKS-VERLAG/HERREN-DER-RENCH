@@ -1191,11 +1191,7 @@
       joergHoldPlayer.classList.remove("visible");
       joergPlayer.classList.remove("hidden-for-hold", "attacking");
 
-      joergHoldPlayer.style.opacity = "0";
-      joergHoldPlayer.style.visibility = "hidden";
 
-      joergPlayer.style.opacity = "1";
-      joergPlayer.style.visibility = "visible";
     }
 
     function startSpaceAction() {
@@ -1244,12 +1240,8 @@
         joergHoldPlayer.classList.remove("visible");
         joergPlayer.classList.remove("hidden-for-hold");
 
-        joergHoldPlayer.style.opacity = "0";
-        joergHoldPlayer.style.visibility = "hidden";
-
-        joergPlayer.style.opacity = "1";
-        joergPlayer.style.visibility = "visible";
-
+    
+    
         playerAttacking = false;
         updatePlayerVisual();
         return;
