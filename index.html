@@ -328,7 +328,7 @@
     .sword-marker {
       position: absolute;
       z-index: 7;
-      width: clamp(52px, 6.4%, 92px);
+      width: clamp(190px, 25%, 360px);
       height: auto;
       opacity: 0;
       pointer-events: none;
@@ -344,18 +344,18 @@
     }
 
     #swordsOne {
-      left: 25.5%;
-      top: 38.0%;
+      left: 25.25%;
+      top: 30.5%;
     }
 
     #swordsTwo {
       left: 60.0%;
-      top: 53.5%;
+      top: 46.0%;
     }
 
     #swordsThree {
       left: 79.5%;
-      top: 33.0%;
+      top: 24.5%;
     }
 
     /* Einziger anklickbarer Rückweg: Torhaus unten links. */
@@ -436,6 +436,7 @@
 
     <audio id="swordClang" src="schwert-klong.wav" preload="auto"></audio>
     <audio id="gateSound" src="tor-gitter.wav" preload="auto"></audio>
+    <audio id="selectionMusic" src="musik-auswahlbildschirm.mp3" preload="auto" loop></audio>
   </section>
 
   <script>
@@ -463,6 +464,7 @@
     const titleHotspots = Array.from(document.querySelectorAll(".title-hotspot"));
     const swordClang = document.getElementById("swordClang");
     const gateSound = document.getElementById("gateSound");
+    const selectionMusic = document.getElementById("selectionMusic");
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -487,6 +489,7 @@
 
     musicOne.volume = 0;
     musicTwo.volume = 0;
+    selectionMusic.volume = 0;
 
     const edgeNoise = Array.from({ length: EDGE_COLUMNS + 1 }, (_, index) => {
       const waveA = Math.sin(index * 1.91) * 0.52;
@@ -734,6 +737,7 @@
 
         await musicOne.play();
         await musicTwo.play();
+        await selectionMusic.play();
 
         audioUnlocked = true;
         startPermanentAudioMixer();
@@ -775,14 +779,30 @@
 
         if (musicOne.paused) musicOne.play().catch(() => {});
         if (musicTwo.paused) musicTwo.play().catch(() => {});
+        if (selectionMusic.paused) selectionMusic.play().catch(() => {});
+        const targetOne = isMuted
+          ? 0
+          : (selectionOpen || selectionTransitioning)
+            ? (selectionOpen ? 0 : MUSIC_MAX_VOLUME)
+            : (gateActive ? 0 : MUSIC_MAX_VOLUME);
 
-        const menuSilent = selectionOpen || selectionTransitioning;
-        const targetOne = (isMuted || menuSilent) ? 0 : (gateActive ? 0 : MUSIC_MAX_VOLUME);
-        const targetTwo = (isMuted || menuSilent) ? 0 : (gateActive ? MUSIC_MAX_VOLUME : 0);
+        const targetTwo = isMuted
+          ? 0
+          : (selectionOpen || selectionTransitioning)
+            ? 0
+            : (gateActive ? MUSIC_MAX_VOLUME : 0);
+
+        const targetSelection = isMuted
+          ? 0
+          : selectionOpen
+            ? MUSIC_MAX_VOLUME
+            : 0;
+
         const step = MUSIC_MAX_VOLUME / (MUSIC_FADE_SECONDS * 30);
 
         musicOne.volume = moveToward(musicOne.volume, targetOne, step);
         musicTwo.volume = moveToward(musicTwo.volume, targetTwo, step);
+        selectionMusic.volume = moveToward(selectionMusic.volume, targetSelection, step);
       }, 1000 / 30);
     }
 
