@@ -514,6 +514,17 @@
         drop-shadow(0 0 18px rgba(255,255,255,.28));
     }
 
+
+    /* Gehaltene Leertaste: separate Ausholpose, gleiche Bodenlinie. */
+    #joergPlayer.holding-strike {
+      width: clamp(118px, 16.2%, 250px);
+      transform-origin: 50% 100%;
+    }
+
+    #joergPlayer.holding-strike.facing-left {
+      transform: scaleX(-1);
+    }
+
   </style>
 </head>
 <body>
@@ -643,6 +654,10 @@
     let playerGrounded = true;
     let playerAttacking = false;
     const gameKeys = new Set();
+    const SPACE_HOLD_DELAY = 220;
+    let spacePressed = false;
+    let spaceHeld = false;
+    let spaceHoldTimer = null;
 
     musicOne.volume = 0;
     musicTwo.volume = 0;
@@ -1065,6 +1080,7 @@
       playerFacing = 1;
       playerGrounded = true;
       gameKeys.clear();
+      resetSpaceAction();
       updatePlayerVisual();
       requestGameFrame();
 
@@ -1090,9 +1106,9 @@
         return;
       }
 
-      const movingLeft = gameKeys.has("KeyA");
-      const movingRight = gameKeys.has("KeyD");
-      const ducking = gameKeys.has("KeyS") && playerGrounded;
+      const movingLeft = !spaceHeld && gameKeys.has("KeyA");
+      const movingRight = !spaceHeld && gameKeys.has("KeyD");
+      const ducking = !spaceHeld && gameKeys.has("KeyS") && playerGrounded;
       const horizontalDirection = (movingRight ? 1 : 0) - (movingLeft ? 1 : 0);
 
       if (!ducking && horizontalDirection !== 0) {
@@ -1128,8 +1144,76 @@
       joergPlayer.classList.toggle("facing-left", playerFacing < 0);
     }
 
+
+    function resetSpaceAction() {
+      if (spaceHoldTimer !== null) {
+        clearTimeout(spaceHoldTimer);
+        spaceHoldTimer = null;
+      }
+
+      spacePressed = false;
+      spaceHeld = false;
+      playerAttacking = false;
+      joergPlayer.src = "joerg-farbig.png";
+      joergPlayer.classList.remove("holding-strike", "attacking");
+    }
+
+    function startSpaceAction() {
+      if (
+        !warenzugOpen ||
+        spacePressed ||
+        !playerGrounded ||
+        gameKeys.has("KeyS") ||
+        playerAttacking
+      ) return;
+
+      spacePressed = true;
+      spaceHeld = false;
+
+      spaceHoldTimer = window.setTimeout(() => {
+        if (!spacePressed || !warenzugOpen) return;
+
+        spaceHeld = true;
+        playerAttacking = true;
+        gameKeys.delete("KeyA");
+        gameKeys.delete("KeyD");
+        gameKeys.delete("KeyW");
+        gameKeys.delete("KeyS");
+
+        joergPlayer.classList.remove("ducking", "attacking");
+        joergPlayer.classList.add("holding-strike");
+        joergPlayer.src = "joerg-schlag-ausholen.png";
+        updatePlayerVisual();
+      }, SPACE_HOLD_DELAY);
+    }
+
+    function finishSpaceAction() {
+      if (!spacePressed) return;
+
+      if (spaceHoldTimer !== null) {
+        clearTimeout(spaceHoldTimer);
+        spaceHoldTimer = null;
+      }
+
+      const wasHeld = spaceHeld;
+
+      spacePressed = false;
+      spaceHeld = false;
+
+      joergPlayer.src = "joerg-farbig.png";
+      joergPlayer.classList.remove("holding-strike");
+
+      if (wasHeld) {
+        playerAttacking = false;
+        updatePlayerVisual();
+        return;
+      }
+
+      strikeWithMace();
+    }
+
     function jumpPlayer() {
-      if (!warenzugOpen || !playerGrounded || gameKeys.has("KeyS")) return;
+      if (!warenzugOpen || !playerGrounded || gameKeys.has("KeyS") || spaceHeld || spacePressed) return;
       playerGrounded = false;
       playerVelocityY = 0.82;
       requestGameFrame();
@@ -1164,21 +1248,32 @@
         jumpPlayer();
       }
 
-      if (event.code === "Space" && !event.repeat) {
-        strikeWithMace();
+      if (event.code === "Space") {
+        if (!event.repeat) startSpaceAction();
+        return;
       }
 
-      gameKeys.add(event.code);
+      if (!spaceHeld) gameKeys.add(event.code);
       requestGameFrame();
     });
 
     document.addEventListener("keyup", event => {
       if (!warenzugOpen) return;
+
+      if (event.code === "Space") {
+        event.preventDefault();
+        finishSpaceAction();
+        return;
+      }
+
       gameKeys.delete(event.code);
     });
 
     window.addEventListener("blur", () => {
-      if (warenzugOpen) gameKeys.clear();
+      if (warenzugOpen) {
+        gameKeys.clear();
+        resetSpaceAction();
+      }
     });
 
 
@@ -1196,7 +1291,8 @@
       playerFacing = 1;
       playerGrounded = true;
       playerAttacking = false;
-      joergPlayer.classList.remove("ducking", "attacking", "facing-left");
+      resetSpaceAction();
+      joergPlayer.classList.remove("ducking", "attacking", "holding-strike", "facing-left");
       updatePlayerVisual();
 
       /* Auswahlbildschirm bereits vollständig vorbereiten. */
