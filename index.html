@@ -226,9 +226,10 @@
 
     const REVEAL_DURATION = 3600;
     const RETURN_DURATION = 2800;
-    const EDGE_COLUMNS = 84;
-    const EDGE_DEPTH = 0.030;
-    const PARTICLE_LIMIT = 260;
+    const EDGE_COLUMNS = 70;
+    const EDGE_DEPTH = 0.026;
+    const STONE_ROWS = 3;
+    const PARTICLE_LIMIT = 150;
     const MUSIC_MAX_VOLUME = 0.72;
     const MUSIC_FADE_SECONDS = 2.4;
 
@@ -295,6 +296,26 @@
       return Math.max(0, Math.min(height, base + edgeNoise[columnIndex] * strength + timeWave));
     }
 
+    /*
+      Neuer Bildwechsel: Die obere Bildebene wirkt wie eine gezeichnete
+      Burgmauer. Entlang der wandernden Bruchkante lösen sich große,
+      unregelmäßige Mauersteine. Geschwindigkeit und Richtung bleiben
+      unverändert: von oben nach unten und beim Verlassen wieder zurück.
+    */
+    function stoneShape(context, x, y, stoneWidth, stoneHeight, seed) {
+      const notch = Math.max(1.2, stoneWidth * 0.08);
+      const skew = Math.sin(seed * 2.17) * stoneWidth * 0.08;
+
+      context.beginPath();
+      context.moveTo(x + notch, y + Math.sin(seed) * 1.4);
+      context.lineTo(x + stoneWidth - notch, y + Math.cos(seed * 1.7) * 1.5);
+      context.lineTo(x + stoneWidth + skew, y + stoneHeight * 0.45);
+      context.lineTo(x + stoneWidth - notch * 0.7, y + stoneHeight);
+      context.lineTo(x + notch * 0.8, y + stoneHeight + Math.sin(seed * 3.1) * 1.2);
+      context.lineTo(x - skew * 0.35, y + stoneHeight * 0.48);
+      context.closePath();
+    }
+
     function drawImageOne() {
       imageContext.clearRect(0, 0, width, height);
 
@@ -305,49 +326,75 @@
 
       imageContext.save();
       imageContext.globalCompositeOperation = "destination-out";
+
+      /* Zuerst verschwindet die bereits vollständig zerfallene Fläche. */
       imageContext.beginPath();
       imageContext.moveTo(0, 0);
       imageContext.lineTo(width, 0);
-
       for (let column = EDGE_COLUMNS; column >= 0; column -= 1) {
         const x = (column / EDGE_COLUMNS) * width;
-        imageContext.lineTo(x, jaggedEdgeY(column));
+        imageContext.lineTo(x, jaggedEdgeY(column) - height * 0.008);
       }
-
       imageContext.closePath();
       imageContext.fill();
 
-      const craterCount = Math.round(22 + 58 * Math.sin(progress * Math.PI));
-      for (let index = 0; index < craterCount; index += 1) {
-        const x = ((index * 47.3) % 100) / 100 * width;
-        const column = Math.round((x / width) * EDGE_COLUMNS);
-        const y = jaggedEdgeY(column) + Math.sin(index * 9.7) * height * 0.013;
-        const radius = 1.2 + ((index * 13) % 11) * 0.42;
-        imageContext.beginPath();
-        imageContext.arc(x, y, radius, 0, Math.PI * 2);
-        imageContext.fill();
+      /* Danach werden an der Kante einzelne große Mauersteine herausgebrochen. */
+      const baseStoneWidth = Math.max(18, width / 24);
+      const baseStoneHeight = Math.max(10, height / 39);
+      const rows = STONE_ROWS;
+
+      for (let row = 0; row < rows; row += 1) {
+        const offset = row % 2 === 0 ? -baseStoneWidth * 0.25 : baseStoneWidth * 0.28;
+        const rowY = row * baseStoneHeight * 0.82;
+        const stones = Math.ceil(width / baseStoneWidth) + 2;
+
+        for (let index = -1; index < stones; index += 1) {
+          const seed = index * 7.13 + row * 19.7;
+          const variation = 0.78 + ((Math.sin(seed) + 1) * 0.16);
+          const stoneWidth = baseStoneWidth * variation;
+          const stoneHeight = baseStoneHeight * (0.80 + ((Math.cos(seed * 1.43) + 1) * 0.13));
+          const x = index * baseStoneWidth + offset;
+          const column = Math.max(0, Math.min(EDGE_COLUMNS, Math.round(((x + stoneWidth * 0.5) / width) * EDGE_COLUMNS)));
+          const edgeY = jaggedEdgeY(column);
+
+          /* Nicht alle Steine lösen sich gleichzeitig: dadurch bleibt die Kante organisch. */
+          const breakup = (Math.sin(seed * 2.31 + progress * 21) + 1) * 0.5;
+          const threshold = 0.28 + row * 0.16;
+          if (breakup > threshold) {
+            stoneShape(imageContext, x, edgeY - rowY - stoneHeight * 0.56, stoneWidth, stoneHeight, seed);
+            imageContext.fill();
+          }
+        }
       }
+
       imageContext.restore();
     }
 
     function spawnParticles(direction) {
       if (progress <= 0.01 || progress >= 0.99) return;
 
-      const count = direction > 0 ? 3 : 1;
+      /* Große, klar erkennbare Burgsteine statt feinem Staub. */
+      const count = direction > 0 ? 2 : 1;
       for (let index = 0; index < count; index += 1) {
         const x = Math.random() * width;
         const column = Math.round((x / width) * EDGE_COLUMNS);
+        const size = Math.max(7, width * (0.010 + Math.random() * 0.014));
+        const returning = direction < 0;
+
         particles.push({
           x,
-          y: jaggedEdgeY(column) + (Math.random() - 0.5) * 9,
-          vx: (Math.random() - 0.5) * 0.55,
-          vy: 0.35 + Math.random() * 1.15,
-          gravity: 0.012 + Math.random() * 0.024,
-          size: 0.8 + Math.random() * 3.0,
-          alpha: 0.12 + Math.random() * 0.34,
-          life: 34 + Math.random() * 72,
+          y: jaggedEdgeY(column) + (Math.random() - 0.5) * 8,
+          vx: (Math.random() - 0.5) * 0.75,
+          vy: returning ? -(0.45 + Math.random() * 0.85) : (0.45 + Math.random() * 1.15),
+          gravity: returning ? -0.007 : (0.014 + Math.random() * 0.018),
+          width: size * (1.25 + Math.random() * 0.75),
+          height: size * (0.62 + Math.random() * 0.38),
+          alpha: 0.58 + Math.random() * 0.30,
+          life: 34 + Math.random() * 48,
           rotation: Math.random() * Math.PI,
-          spin: (Math.random() - 0.5) * 0.10
+          spin: (Math.random() - 0.5) * 0.075,
+          seed: Math.random() * 100,
+          returning
         });
       }
 
@@ -363,11 +410,14 @@
         particle.vy += particle.gravity;
         particle.rotation += particle.spin;
         particle.life -= 1;
-        particle.alpha *= 0.985;
+        particle.alpha *= 0.977;
       }
 
       particles = particles.filter(particle =>
-        particle.life > 0 && particle.alpha > 0.01 && particle.y < height + 20
+        particle.life > 0 &&
+        particle.alpha > 0.02 &&
+        particle.y < height + 45 &&
+        particle.y > -45
       );
     }
 
@@ -378,13 +428,31 @@
         particleContext.save();
         particleContext.translate(particle.x, particle.y);
         particleContext.rotate(particle.rotation);
-        particleContext.fillStyle = `rgba(175, 175, 175, ${particle.alpha})`;
-        particleContext.fillRect(
-          -particle.size / 2,
-          -particle.size / 3,
-          particle.size,
-          particle.size * 0.65
+
+        /* Simpler schwarz-weißer Federzeichnungsstil. */
+        stoneShape(
+          particleContext,
+          -particle.width / 2,
+          -particle.height / 2,
+          particle.width,
+          particle.height,
+          particle.seed
         );
+        particleContext.fillStyle = `rgba(208, 208, 204, ${particle.alpha})`;
+        particleContext.strokeStyle = `rgba(20, 20, 20, ${Math.min(0.95, particle.alpha + 0.12)})`;
+        particleContext.lineWidth = Math.max(1.1, particle.width * 0.055);
+        particleContext.fill();
+        particleContext.stroke();
+
+        /* Eine simple Fugen-/Bruchlinie auf jedem Stein. */
+        particleContext.beginPath();
+        particleContext.moveTo(-particle.width * 0.22, -particle.height * 0.05);
+        particleContext.lineTo(particle.width * 0.08, particle.height * 0.13);
+        particleContext.lineTo(particle.width * 0.29, -particle.height * 0.08);
+        particleContext.strokeStyle = `rgba(45, 45, 45, ${particle.alpha * 0.72})`;
+        particleContext.lineWidth = Math.max(0.8, particle.width * 0.025);
+        particleContext.stroke();
+
         particleContext.restore();
       }
     }
