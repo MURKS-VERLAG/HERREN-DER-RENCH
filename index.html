@@ -428,7 +428,8 @@
     }
 
     #joergPlayer,
-    #joergHoldPlayer {
+    #joergHoldPlayer,
+    #joergGroundPlayer {
       position: absolute;
       z-index: 3;
       left: 10%;
@@ -444,7 +445,8 @@
     }
 
     #joergPlayer.facing-left,
-    #joergHoldPlayer.facing-left {
+    #joergHoldPlayer.facing-left,
+    #joergGroundPlayer.facing-left {
       transform: scaleX(-1);
     }
 
@@ -529,7 +531,14 @@
       visibility: hidden;
     }
 
-    #joergHoldPlayer.visible {
+    #joergGroundPlayer {
+      width: clamp(145px, 20.0%, 310px);
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    #joergHoldPlayer.visible,
+    #joergGroundPlayer.visible {
       opacity: 1;
       visibility: visible;
     }
@@ -539,7 +548,8 @@
       visibility: hidden;
     }
 
-    #joergHoldPlayer.facing-left {
+    #joergHoldPlayer.facing-left,
+    #joergGroundPlayer.facing-left {
       transform: scaleX(-1);
     }
 
@@ -602,8 +612,9 @@
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
     <div id="warenzugWorld">
       <img id="warenzugBackground" src="warenzug-ebene.png" alt="">
-      <img id="joergPlayer" src="joerg-farbig.png?v=4" alt="Jörg">
-      <img id="joergHoldPlayer" src="joerg-schlag-ausholen.png?v=4" alt="" aria-hidden="true">
+      <img id="joergPlayer" src="joerg-farbig.png?v=7" alt="Jörg">
+      <img id="joergHoldPlayer" src="joerg-schlag-ausholen.png?v=7" alt="" aria-hidden="true">
+      <img id="joergGroundPlayer" src="joerg-schlag-boden.png?v=7" alt="" aria-hidden="true">
 
       <button id="gameReturnHotspot" type="button" aria-label="Zurück zur Auswahl" title="Zurück zur Auswahl">
         <img id="gameReturnGate" src="torhaus-zurueck.png" alt="">
@@ -642,6 +653,7 @@
     const warenzugWorld = document.getElementById("warenzugWorld");
     const joergPlayer = document.getElementById("joergPlayer");
     const joergHoldPlayer = document.getElementById("joergHoldPlayer");
+    const joergGroundPlayer = document.getElementById("joergGroundPlayer");
     const gameReturnHotspot = document.getElementById("gameReturnHotspot");
 
     const imageContext = imageCanvas.getContext("2d");
@@ -676,14 +688,17 @@
     const gameKeys = new Set();
 
     const joergNormalPreload = new Image();
-    joergNormalPreload.src = "joerg-farbig.png?v=4";
+    joergNormalPreload.src = "joerg-farbig.png?v=7";
     const joergHoldPreload = new Image();
-    joergHoldPreload.src = "joerg-schlag-ausholen.png?v=4";
+    joergHoldPreload.src = "joerg-schlag-ausholen.png?v=7";
+    const joergGroundPreload = new Image();
+    joergGroundPreload.src = "joerg-schlag-boden.png?v=7";
 
     const SPACE_HOLD_DELAY = 220;
     let spacePressed = false;
     let spaceHeld = false;
     let spaceHoldTimer = null;
+    let maceGroundState = false;
 
     musicOne.volume = 0;
     musicTwo.volume = 0;
@@ -1132,9 +1147,9 @@
         return;
       }
 
-      const movingLeft = !spaceHeld && gameKeys.has("KeyA");
-      const movingRight = !spaceHeld && gameKeys.has("KeyD");
-      const ducking = !spaceHeld && gameKeys.has("KeyS") && playerGrounded;
+      const movingLeft = !spaceHeld && !maceGroundState && gameKeys.has("KeyA");
+      const movingRight = !spaceHeld && !maceGroundState && gameKeys.has("KeyD");
+      const ducking = !spaceHeld && !maceGroundState && gameKeys.has("KeyS") && playerGrounded;
       const horizontalDirection = (movingRight ? 1 : 0) - (movingLeft ? 1 : 0);
 
       if (!ducking && horizontalDirection !== 0) {
@@ -1172,9 +1187,12 @@
       joergPlayer.style.bottom = bottom;
       joergHoldPlayer.style.left = left;
       joergHoldPlayer.style.bottom = bottom;
+      joergGroundPlayer.style.left = left;
+      joergGroundPlayer.style.bottom = bottom;
 
       joergPlayer.classList.toggle("facing-left", playerFacing < 0);
       joergHoldPlayer.classList.toggle("facing-left", playerFacing < 0);
+      joergGroundPlayer.classList.toggle("facing-left", playerFacing < 0);
     }
 
 
@@ -1186,17 +1204,27 @@
 
       spacePressed = false;
       spaceHeld = false;
+      maceGroundState = false;
       playerAttacking = false;
 
       joergHoldPlayer.classList.remove("visible");
+      joergGroundPlayer.classList.remove("visible");
       joergPlayer.classList.remove("hidden-for-hold", "attacking");
-
-
     }
 
     function startSpaceAction() {
+      if (!warenzugOpen) return;
+
+      if (maceGroundState) {
+        maceGroundState = false;
+        playerAttacking = false;
+        joergGroundPlayer.classList.remove("visible");
+        joergPlayer.classList.remove("hidden-for-hold");
+        updatePlayerVisual();
+        return;
+      }
+
       if (
-        !warenzugOpen ||
         spacePressed ||
         !playerGrounded ||
         gameKeys.has("KeyS") ||
@@ -1238,11 +1266,11 @@
 
       if (wasHeld) {
         joergHoldPlayer.classList.remove("visible");
-        joergPlayer.classList.remove("hidden-for-hold");
+        joergGroundPlayer.classList.add("visible");
+        joergPlayer.classList.add("hidden-for-hold");
 
-    
-    
-        playerAttacking = false;
+        maceGroundState = true;
+        playerAttacking = true;
         updatePlayerVisual();
         return;
       }
@@ -1251,7 +1279,7 @@
     }
 
     function jumpPlayer() {
-      if (!warenzugOpen || !playerGrounded || gameKeys.has("KeyS") || spaceHeld || spacePressed) return;
+      if (!warenzugOpen || !playerGrounded || gameKeys.has("KeyS") || spaceHeld || spacePressed || maceGroundState) return;
       playerGrounded = false;
       playerVelocityY = 0.82;
       requestGameFrame();
@@ -1291,7 +1319,7 @@
         return;
       }
 
-      if (!spaceHeld) gameKeys.add(event.code);
+      if (!spaceHeld && !maceGroundState) gameKeys.add(event.code);
       requestGameFrame();
     });
 
@@ -1332,6 +1360,7 @@
       resetSpaceAction();
       joergPlayer.classList.remove("ducking", "attacking", "hidden-for-hold", "facing-left");
       joergHoldPlayer.classList.remove("visible", "facing-left");
+      joergGroundPlayer.classList.remove("visible", "facing-left");
       updatePlayerVisual();
 
       /* Auswahlbildschirm bereits vollständig vorbereiten. */
