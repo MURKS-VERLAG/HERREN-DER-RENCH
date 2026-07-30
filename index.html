@@ -140,28 +140,49 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Kleiner Hinweis, weil Browser Musik erst nach einem Klick erlauben. */
-    #soundHint {
+    /* Lautsprecher unten rechts: Musik an/aus. */
+    #muteButton {
       position: absolute;
-      z-index: 7;
-      left: 50%;
-      bottom: 2.2%;
-      transform: translateX(-50%);
-      padding: 8px 13px;
-      border: 1px solid rgba(255,255,255,.38);
-      background: rgba(0,0,0,.62);
-      color: rgba(255,255,255,.88);
-      font: 600 12px/1.1 Georgia, serif;
-      letter-spacing: .08em;
-      text-transform: uppercase;
+      z-index: 8;
+      right: 2.2%;
+      bottom: 3.0%;
+      width: 46px;
+      height: 46px;
+      margin: 0;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,.42);
+      border-radius: 50%;
+      background: rgba(0,0,0,.58);
+      color: rgba(255,255,255,.94);
+      display: grid;
+      place-items: center;
       cursor: pointer;
-      transition: opacity .5s ease;
+      outline: none;
+      box-shadow: 0 0 16px rgba(0,0,0,.45);
+      transition: transform .18s ease, background .18s ease, opacity .18s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    #soundHint.hidden {
-      opacity: 0;
+    #muteButton:hover,
+    #muteButton:focus-visible {
+      transform: scale(1.08);
+      background: rgba(0,0,0,.78);
+    }
+
+    #muteButton svg {
+      width: 25px;
+      height: 25px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
       pointer-events: none;
     }
+
+    #muteButton .icon-muted { display: none; }
+    #muteButton.muted .icon-sound { display: none; }
+    #muteButton.muted .icon-muted { display: block; }
   </style>
 </head>
 <body>
@@ -177,7 +198,18 @@
 
     <canvas id="particleCanvas" aria-hidden="true"></canvas>
     <button id="gateHotspot" type="button" aria-label="Burgtor"></button>
-    <button id="soundHint" type="button">Klick für Musik</button>
+    <button id="muteButton" type="button" aria-label="Musik stummschalten" title="Musik stummschalten">
+      <svg class="icon-sound" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z"></path>
+        <path d="M16 8.5a5 5 0 0 1 0 7"></path>
+        <path d="M18.5 6a8.5 8.5 0 0 1 0 12"></path>
+      </svg>
+      <svg class="icon-muted" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z"></path>
+        <path d="m17 9 5 5"></path>
+        <path d="m22 9-5 5"></path>
+      </svg>
+    </button>
 
     <audio id="musicOne" src="musik-bild-1.mp3" preload="auto" loop></audio>
     <audio id="musicTwo" src="musik-bild-2.mp3" preload="auto" loop></audio>
@@ -199,7 +231,7 @@
     const imageCanvas = document.getElementById("bild1Canvas");
     const particleCanvas = document.getElementById("particleCanvas");
     const gateHotspot = document.getElementById("gateHotspot");
-    const soundHint = document.getElementById("soundHint");
+    const muteButton = document.getElementById("muteButton");
     const musicOne = document.getElementById("musicOne");
     const musicTwo = document.getElementById("musicTwo");
 
@@ -218,6 +250,7 @@
     let gateActive = false;
     let audioFrame = null;
     let audioPreviousTime = performance.now();
+    let isMuted = false;
 
     musicOne.volume = 0;
     musicTwo.volume = 0;
@@ -385,20 +418,28 @@
     }
 
     async function unlockAudio() {
-      if (audioUnlocked) return;
+      if (audioUnlocked) return true;
 
       try {
         musicOne.volume = 0;
         musicTwo.volume = 0;
-
-        /* Beide Audiodateien werden durch dieselbe echte Nutzeraktion entsperrt. */
         await Promise.all([musicOne.play(), musicTwo.play()]);
-
         audioUnlocked = true;
-        soundHint.classList.add("hidden");
         startAudioFade();
+        return true;
       } catch (error) {
-        soundHint.classList.remove("hidden");
+        return false;
+      }
+    }
+
+    async function tryAutoplay() {
+      const started = await unlockAudio();
+      if (!started) {
+        /* Manche Browser verbieten Ton ohne vorherige Nutzeraktion.
+           Dann startet die Musik unsichtbar beim ersten Klick oder Tastendruck. */
+        document.addEventListener("pointerdown", unlockAudio, { once: true });
+        document.addEventListener("keydown", unlockAudio, { once: true });
+        document.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
       }
     }
 
@@ -412,8 +453,8 @@
       const elapsedSeconds = Math.min(0.05, (now - audioPreviousTime) / 1000);
       audioPreviousTime = now;
       const step = (MUSIC_MAX_VOLUME / MUSIC_FADE_SECONDS) * elapsedSeconds;
-      const targetOne = gateActive ? 0 : MUSIC_MAX_VOLUME;
-      const targetTwo = gateActive ? MUSIC_MAX_VOLUME : 0;
+      const targetOne = isMuted ? 0 : (gateActive ? 0 : MUSIC_MAX_VOLUME);
+      const targetTwo = isMuted ? 0 : (gateActive ? MUSIC_MAX_VOLUME : 0);
 
       /* Beide Titel bleiben nach dem ersten Klick dauerhaft aktiv.
          Nur die Lautstärken wechseln. Dadurch funktioniert jeder Hover-Wechsel
@@ -448,14 +489,20 @@
     gateHotspot.addEventListener("pointerenter", () => setGateActive(true));
     gateHotspot.addEventListener("pointerleave", () => setGateActive(false));
 
-    soundHint.addEventListener("click", unlockAudio);
-    document.addEventListener("pointerdown", unlockAudio, { once: true });
-    document.addEventListener("keydown", unlockAudio, { once: true });
+    muteButton.addEventListener("click", async () => {
+      if (!audioUnlocked) await unlockAudio();
+      isMuted = !isMuted;
+      muteButton.classList.toggle("muted", isMuted);
+      muteButton.setAttribute("aria-label", isMuted ? "Musik einschalten" : "Musik stummschalten");
+      muteButton.setAttribute("title", isMuted ? "Musik einschalten" : "Musik stummschalten");
+      startAudioFade();
+    });
 
     imageOne.addEventListener("load", resizeCanvases);
     window.addEventListener("resize", resizeCanvases);
 
     if (imageOne.complete) resizeCanvases();
+    tryAutoplay();
   </script>
 </body>
 </html>
