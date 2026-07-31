@@ -1136,7 +1136,7 @@
       position: absolute;
       z-index: 11;
       left: 50%;
-      top: 0.4%;
+      top: -7.2%;
       width: min(64vw, 760px);
       transform: translateX(-50%);
       pointer-events: none;
@@ -1160,7 +1160,7 @@
 
     #schauenburgHealthLoss {
       position: absolute;
-      z-index: 1;
+      z-index: 3;
       right: 8.6%;
       top: 42.8%;
       width: 0%;
@@ -2043,11 +2043,11 @@
       */
       let times;
       do {
-        times = Array.from({ length: 4 }, () => 3500 + Math.random() * 52000)
+        times = Array.from({ length: 10 }, () => 2500 + Math.random() * 54500)
           .sort((a, b) => a - b);
       } while (
         times[0] < 2800 ||
-        times.some((time, index) => index > 0 && time - times[index - 1] < 6000)
+        times.some((time, index) => index > 0 && time - times[index - 1] < 2800)
       );
       return times;
     }
