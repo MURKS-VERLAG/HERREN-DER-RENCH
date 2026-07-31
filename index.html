@@ -1161,6 +1161,51 @@
       opacity: 0;
     }
 
+
+    /* Phase-1-Testkasten: ganz oben links, simpel mittelalterlich, weinrot. */
+    #friedrichBockEventBox {
+      position: absolute;
+      z-index: 12;
+      left: 0.7%;
+      top: 0.7%;
+      width: clamp(210px, 27vw, 430px);
+      height: clamp(125px, 20vh, 250px);
+      display: none;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(28, 7, 12, .92), rgba(18, 4, 8, .95));
+      border: clamp(4px, .45vw, 7px) double #6f1027;
+      outline: 2px solid rgba(201, 160, 116, .78);
+      box-shadow:
+        inset 0 0 0 3px rgba(33, 4, 10, .96),
+        inset 0 0 18px rgba(0,0,0,.68),
+        0 5px 18px rgba(0,0,0,.58);
+    }
+
+    #friedrichBockEventBox::before,
+    #friedrichBockEventBox::after {
+      content: "✦";
+      position: absolute;
+      top: 50%;
+      width: clamp(23px, 2.2vw, 34px);
+      height: clamp(23px, 2.2vw, 34px);
+      display: grid;
+      place-items: center;
+      background: #7a122b;
+      border: 2px solid #c9a074;
+      color: #f0dfc1;
+      font-size: clamp(14px, 1.35vw, 22px);
+      transform: translateY(-50%) rotate(45deg);
+      box-shadow: 0 0 0 2px #2b0710;
+    }
+
+    #friedrichBockEventBox::before { left: clamp(-15px, -1.1vw, -10px); }
+    #friedrichBockEventBox::after  { right: clamp(-15px, -1.1vw, -10px); }
+
+    #friedrichBockEventBox.visible {
+      display: block;
+    }
+
     /* BELAGERUNG V1: ausschließlich innerhalb von #schauenburgScreen. */
     #schauenburgHealth {
       position: absolute;
@@ -1650,6 +1695,7 @@
     <img id="schauenburgOverview" src="schauenburg-belagerung.png" alt="Belagerung der Schauenburg 1432">
     <img id="friedrichSchreiber" src="friedrich-schreiber.png" alt="" aria-hidden="true">
     <img id="friedrichBockEventRider" src="friedrich-bock-event.png" alt="" aria-hidden="true">
+    <div id="friedrichBockEventBox" aria-hidden="true"></div>
 
     <div id="schauenburgHealth" aria-label="Lebensleiste der Schauenburg">
       <div id="schauenburgHealthLoss"></div>
@@ -1674,7 +1720,7 @@
     <audio id="schauenburgRammbockSound" src="rammbock-rumms.wav" preload="auto"></audio>
     <audio id="schauenburgCannonSound" src="kanonenschlag.wav" preload="auto"></audio>
     <audio id="friedrichBockArrivalSound" src="friedrich-bock-erscheint.mp3" preload="auto"></audio>
-    <audio id="friedrichBockTargetSound" src="friedrich-bock-ziel.wav" preload="auto"></audio>
+    <audio id="friedrichBockTargetSound" src="friedrich-bock-ziel-v2.wav" preload="auto"></audio>
   </section>
 
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
@@ -1745,6 +1791,7 @@
     const schauenburgCannonSound = document.getElementById("schauenburgCannonSound");
     const friedrichSchreiber = document.getElementById("friedrichSchreiber");
     const friedrichBockEventRider = document.getElementById("friedrichBockEventRider");
+    const friedrichBockEventBox = document.getElementById("friedrichBockEventBox");
     const friedrichBockArrivalSound = document.getElementById("friedrichBockArrivalSound");
     const friedrichBockTargetSound = document.getElementById("friedrichBockTargetSound");
 
@@ -2463,6 +2510,10 @@
 
       friedrichBockEventActive = true;
 
+      if (friedrichBockEventBox) {
+        friedrichBockEventBox.classList.add("visible");
+      }
+
       /* Schreiber während des gesamten Ereignisses exakt auf Anhang 4 wechseln. */
       friedrichSchreiber.classList.add("friedrich-event-switching");
       window.setTimeout(() => {
@@ -2530,7 +2581,7 @@
           }
         ],
         {
-          duration: 12500,
+          duration: 15500,
           easing: "linear",
           fill: "forwards"
         }
@@ -2547,10 +2598,9 @@
 
         /* Anhang 2: genau einmal beim tatsächlichen Erreichen des Ziels. */
         if (!isMuted && friedrichBockTargetSound) {
-          friedrichBockTargetSound.pause();
-          friedrichBockTargetSound.currentTime = 0;
-          friedrichBockTargetSound.volume = 1.0;
-          friedrichBockTargetSound.play().catch(() => {});
+          const targetSound = friedrichBockTargetSound.cloneNode();
+          targetSound.volume = 1.0;
+          targetSound.play().catch(() => {});
         }
 
         /* Am Ziel exakt fünf Sekunden stehen bleiben. */
@@ -2573,6 +2623,10 @@
 
       friedrichBockEventRider.classList.remove("visible");
       friedrichBockEventRider.removeAttribute("style");
+
+      if (friedrichBockEventBox) {
+        friedrichBockEventBox.classList.remove("visible");
+      }
 
       /* Nach dem Ereignis wieder den bisherigen normalen Schreiber herstellen. */
       friedrichSchreiber.classList.add("friedrich-event-switching");
@@ -2605,6 +2659,10 @@
       if (friedrichBockEventRider) {
         friedrichBockEventRider.classList.remove("visible");
         friedrichBockEventRider.removeAttribute("style");
+      }
+
+      if (friedrichBockEventBox) {
+        friedrichBockEventBox.classList.remove("visible");
       }
 
       if (friedrichSchreiber) {
