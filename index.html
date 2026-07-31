@@ -1876,7 +1876,16 @@
     let friedrichBockMinigameLocked = false;
     let friedrichBockMinigameIndex = 0;
     let friedrichBockMinigameResetTimer = null;
-    const FRIEDRICH_BOCK_WORD = "BOCK";
+    const FRIEDRICH_BOCK_SEQUENCE = [
+      { code: "KeyB", label: "B" },
+      { code: "KeyO", label: "O" },
+      { code: "KeyC", label: "C" },
+      { code: "KeyK", label: "K" },
+      { code: "ArrowLeft", label: "←" },
+      { code: "ArrowUp", label: "↑" },
+      { code: "ArrowRight", label: "→" },
+      { code: "ArrowDown", label: "↓" }
+    ];
     const schauenburgEnemies = new Map();
     let gameFrameRequest = null;
     let gamePreviousTime = performance.now();
@@ -1894,6 +1903,9 @@
     joergHoldPreload.src = "joerg-schlag-ausholen.png?v=7";
     const joergGroundPreload = new Image();
     joergGroundPreload.src = "joerg-schlag-boden.png?v=7";
+
+    const friedrichBockSuccessPreload = new Image();
+    friedrichBockSuccessPreload.src = "friedrich-bock-tuer-richtig.png?v=2";
 
     const SPACE_HOLD_DELAY = 220;
     let spacePressed = false;
@@ -2543,8 +2555,8 @@
 
     function updateFriedrichBockMinigameLetter() {
       if (!friedrichBockMinigameLetter) return;
-      friedrichBockMinigameLetter.textContent =
-        FRIEDRICH_BOCK_WORD[friedrichBockMinigameIndex] || "";
+      const step = FRIEDRICH_BOCK_SEQUENCE[friedrichBockMinigameIndex];
+      friedrichBockMinigameLetter.textContent = step ? step.label : "";
     }
 
     function playFriedrichBockOneShot(audioElement, volume = 0.9) {
@@ -2584,19 +2596,24 @@
         event.repeat
       ) return false;
 
-      /*
-        Während des Minispiels zählt jede druckbare Buchstabentaste.
-        Die erwartete Folge lautet ausschließlich B-O-C-K.
-      */
-      if (!event.code.startsWith("Key")) return false;
+      const expectedStep =
+        FRIEDRICH_BOCK_SEQUENCE[friedrichBockMinigameIndex];
+
+      if (!expectedStep) return false;
+
+      const isRelevantInput =
+        event.code.startsWith("Key") ||
+        event.code === "ArrowLeft" ||
+        event.code === "ArrowUp" ||
+        event.code === "ArrowRight" ||
+        event.code === "ArrowDown";
+
+      if (!isRelevantInput) return false;
 
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      const pressedLetter = event.code.slice(3).toUpperCase();
-      const expectedLetter = FRIEDRICH_BOCK_WORD[friedrichBockMinigameIndex];
-
-      if (pressedLetter === expectedLetter) {
+      if (event.code === expectedStep.code) {
         handleCorrectFriedrichBockMinigameKey();
       } else {
         handleWrongFriedrichBockMinigameKey();
@@ -2613,18 +2630,18 @@
       }
 
       if (friedrichBockMinigameImage) {
-        friedrichBockMinigameImage.src = "friedrich-bock-tuer-richtig.png";
+        friedrichBockMinigameImage.src = "friedrich-bock-tuer-richtig.png?v=2";
       }
 
       playFriedrichBockOneShot(friedrichBockHammerSound, 0.92);
 
       friedrichBockMinigameIndex += 1;
 
-      if (friedrichBockMinigameIndex >= FRIEDRICH_BOCK_WORD.length) {
+      if (friedrichBockMinigameIndex >= FRIEDRICH_BOCK_SEQUENCE.length) {
         friedrichBockMinigameResetTimer = window.setTimeout(() => {
           friedrichBockMinigameResetTimer = null;
           completeFriedrichBockMinigame();
-        }, 210);
+        }, 650);
         return;
       }
 
@@ -2643,7 +2660,7 @@
         }
 
         updateFriedrichBockMinigameLetter();
-      }, 210);
+      }, 650);
     }
 
     function handleWrongFriedrichBockMinigameKey() {
@@ -2744,13 +2761,9 @@
 
       startFriedrichBockMinigame();
 
-      /* Schreiber während des gesamten Ereignisses exakt auf Anhang 4 wechseln. */
-      friedrichSchreiber.classList.add("friedrich-event-switching");
-      window.setTimeout(() => {
-        if (!friedrichBockEventActive) return;
-        friedrichSchreiber.src = "friedrich-schreiber-alarm.png";
-        friedrichSchreiber.classList.remove("friedrich-event-switching");
-      }, 170);
+      /* Schreiber wechselt im exakt selben Frame wie Friedrich erscheint. */
+      friedrichSchreiber.src = "friedrich-schreiber-alarm.png";
+      friedrichSchreiber.classList.remove("friedrich-event-switching");
 
       /* Anhang 1: genau einmal beim Erscheinen. */
       if (!isMuted && friedrichBockArrivalSound) {
@@ -2831,6 +2844,9 @@
         /* Beim tatsächlichen Erreichen des Ziels:
            zuerst Anhang 1 vollständig, unmittelbar danach Anhang 2. */
         playFriedrichBockTargetSequence();
+
+        /* Sofortige Verstärkung: exakt 20 gemischte Ritter 1 und 2. */
+        spawnFriedrichBockReinforcementWave();
 
         /* Am Ziel exakt fünf Sekunden stehen bleiben. */
         friedrichBockEventEndTimer = window.setTimeout(() => {
@@ -3369,10 +3385,22 @@
       window.setTimeout(() => dust.remove(), 1500);
     }
 
-    function spawnSchauenburgEnemy() {
+    function spawnFriedrichBockReinforcementWave() {
+      if (!schauenburgOpen || schauenburgTransitioning) return;
+
+      for (let index = 0; index < 20; index += 1) {
+        const forcedType = Math.random() < 0.5 ? 1 : 2;
+        spawnSchauenburgEnemy(forcedType);
+      }
+    }
+
+    function spawnSchauenburgEnemy(forcedType = null) {
       if (!schauenburgOpen || schauenburgTransitioning || !schauenburgEnemyLayer) return;
 
-      const type = schauenburgEnemySequence % 2 === 0 ? 1 : 2;
+      const type =
+        forcedType === 1 || forcedType === 2
+          ? forcedType
+          : (schauenburgEnemySequence % 2 === 0 ? 1 : 2);
       schauenburgEnemySequence += 1;
 
       const id = ++schauenburgEnemyId;
