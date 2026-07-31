@@ -1730,11 +1730,10 @@
     <audio id="schauenburgRammbockSound" src="rammbock-rumms.wav" preload="auto"></audio>
     <audio id="schauenburgCannonSound" src="kanonenschlag.wav" preload="auto"></audio>
     <audio id="friedrichBockArrivalSound" src="friedrich-bock-erscheint.mp3" preload="auto"></audio>
-    <audio id="friedrichBockTargetSound" src="friedrich-bock-ziel-v2.wav" preload="auto"></audio>
-    <audio id="friedrichBockPainSound" src="friedrich-bock-daumen.wav" preload="auto"></audio>
-    <audio id="friedrichBockHammerOne" src="friedrich-bock-hammer-1.wav" preload="auto"></audio>
-    <audio id="friedrichBockHammerTwo" src="friedrich-bock-hammer-2.wav" preload="auto"></audio>
-    <audio id="friedrichBockHammerThree" src="friedrich-bock-hammer-3.wav" preload="auto"></audio>
+    <audio id="friedrichBockTargetSoundOne" src="friedrich-bock-ziel-1.mp3" preload="auto"></audio>
+    <audio id="friedrichBockTargetSoundTwo" src="friedrich-bock-ziel-2.mp3" preload="auto"></audio>
+    <audio id="friedrichBockHammerSound" src="friedrich-bock-hammer.mp3" preload="auto"></audio>
+    <audio id="friedrichBockPainSound" src="friedrich-bock-fehler.mp3" preload="auto"></audio>
   </section>
 
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
@@ -1809,13 +1808,10 @@
     const friedrichBockMinigameImage = document.getElementById("friedrichBockMinigameImage");
     const friedrichBockMinigameLetter = document.getElementById("friedrichBockMinigameLetter");
     const friedrichBockArrivalSound = document.getElementById("friedrichBockArrivalSound");
-    const friedrichBockTargetSound = document.getElementById("friedrichBockTargetSound");
+    const friedrichBockTargetSoundOne = document.getElementById("friedrichBockTargetSoundOne");
+    const friedrichBockTargetSoundTwo = document.getElementById("friedrichBockTargetSoundTwo");
+    const friedrichBockHammerSound = document.getElementById("friedrichBockHammerSound");
     const friedrichBockPainSound = document.getElementById("friedrichBockPainSound");
-    const friedrichBockHammerSounds = [
-      document.getElementById("friedrichBockHammerOne"),
-      document.getElementById("friedrichBockHammerTwo"),
-      document.getElementById("friedrichBockHammerThree")
-    ];
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -2546,6 +2542,28 @@
       sound.play().catch(() => {});
     }
 
+    function playFriedrichBockTargetSequence() {
+      if (isMuted || !friedrichBockTargetSoundOne || !friedrichBockTargetSoundTwo) return;
+
+      const firstSound = friedrichBockTargetSoundOne.cloneNode();
+      const secondSound = friedrichBockTargetSoundTwo.cloneNode();
+
+      firstSound.volume = 1.0;
+      secondSound.volume = 1.0;
+
+      firstSound.addEventListener("ended", () => {
+        if (!isMuted) {
+          secondSound.play().catch(error => {
+            console.error("Friedrich-Bock-Zielsound 2 konnte nicht abgespielt werden:", error);
+          });
+        }
+      }, { once: true });
+
+      firstSound.play().catch(error => {
+        console.error("Friedrich-Bock-Zielsound 1 konnte nicht abgespielt werden:", error);
+      });
+    }
+
     function handleFriedrichBockMinigameKey(event) {
       if (
         !friedrichBockEventActive ||
@@ -2586,12 +2604,7 @@
         friedrichBockMinigameImage.src = "friedrich-bock-tuer-richtig.png";
       }
 
-      const validHammerSounds = friedrichBockHammerSounds.filter(Boolean);
-      if (validHammerSounds.length > 0) {
-        const selectedSound =
-          validHammerSounds[Math.floor(Math.random() * validHammerSounds.length)];
-        playFriedrichBockOneShot(selectedSound, 0.86);
-      }
+      playFriedrichBockOneShot(friedrichBockHammerSound, 0.92);
 
       friedrichBockMinigameIndex += 1;
 
@@ -2803,12 +2816,9 @@
 
         stopFriedrichBockMinigame();
 
-        /* Anhang 2: genau einmal beim tatsächlichen Erreichen des Ziels. */
-        if (!isMuted && friedrichBockTargetSound) {
-          const targetSound = friedrichBockTargetSound.cloneNode();
-          targetSound.volume = 1.0;
-          targetSound.play().catch(() => {});
-        }
+        /* Beim tatsächlichen Erreichen des Ziels:
+           zuerst Anhang 1 vollständig, unmittelbar danach Anhang 2. */
+        playFriedrichBockTargetSequence();
 
         /* Am Ziel exakt fünf Sekunden stehen bleiben. */
         friedrichBockEventEndTimer = window.setTimeout(() => {
@@ -2872,7 +2882,13 @@
         friedrichSchreiber.classList.remove("friedrich-event-switching");
       }
 
-      for (const sound of [friedrichBockArrivalSound, friedrichBockTargetSound]) {
+      for (const sound of [
+        friedrichBockArrivalSound,
+        friedrichBockTargetSoundOne,
+        friedrichBockTargetSoundTwo,
+        friedrichBockHammerSound,
+        friedrichBockPainSound
+      ]) {
         if (!sound) continue;
         sound.pause();
         sound.currentTime = 0;
