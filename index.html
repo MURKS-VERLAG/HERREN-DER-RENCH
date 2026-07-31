@@ -812,6 +812,153 @@
       transform: scaleX(1);
     }
 
+
+    /* Belagerung der Schauenburg 1432: eigenständiger Comic-Schurkenübergang. */
+    #schauenburgTransition {
+      position: fixed;
+      inset: 0;
+      z-index: 180;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: #ded8c8;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      isolation: isolate;
+    }
+
+    #schauenburgTransition.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #schauenburgSpiral {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 1;
+      width: 190vmax;
+      height: 190vmax;
+      border-radius: 50%;
+      transform: translate3d(-50%, -50%, 0) rotate(0deg);
+      background:
+        repeating-conic-gradient(
+          from 0deg,
+          #111 0deg 8deg,
+          #e4dfd1 8deg 18deg,
+          #343434 18deg 22deg,
+          #f0eadb 22deg 34deg
+        );
+      box-shadow: inset 0 0 11vmax rgba(0,0,0,.34);
+      filter: contrast(1.15) grayscale(1);
+      will-change: transform;
+    }
+
+    #schauenburgSpiral::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center,
+          transparent 0 5%,
+          rgba(0,0,0,.16) 12%,
+          transparent 21%,
+          rgba(0,0,0,.12) 35%,
+          transparent 52%,
+          rgba(0,0,0,.18) 76%,
+          transparent 100%);
+      mix-blend-mode: multiply;
+    }
+
+    #friedrichBockTransition {
+      position: relative;
+      z-index: 3;
+      display: block;
+      width: min(49vw, 61vh);
+      max-height: 93vh;
+      object-fit: contain;
+      opacity: 0;
+      transform: translate3d(0, 0, 0) rotate(-270deg) scale(.28);
+      transform-origin: 50% 52%;
+      filter:
+        drop-shadow(0 9px 2px rgba(255,255,255,.78))
+        drop-shadow(0 14px 14px rgba(0,0,0,.62));
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+    }
+
+    #schauenburgTransition.active #schauenburgSpiral {
+      animation: schauenburgSpiralSpin 1500ms cubic-bezier(.22,.64,.26,1) forwards;
+    }
+
+    #schauenburgTransition.active #friedrichBockTransition {
+      animation: friedrichVillainEntrance 1500ms cubic-bezier(.18,.72,.22,1) forwards;
+    }
+
+    #schauenburgTransition.fade-out {
+      animation: schauenburgTransitionFade 620ms ease-in-out forwards;
+    }
+
+    @keyframes schauenburgSpiralSpin {
+      from { transform: translate3d(-50%, -50%, 0) rotate(0deg) scale(.84); }
+      to   { transform: translate3d(-50%, -50%, 0) rotate(720deg) scale(1); }
+    }
+
+    @keyframes friedrichVillainEntrance {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) rotate(-270deg) scale(.28);
+      }
+      18% { opacity: 1; }
+      78% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotate(20deg) scale(1.06);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes schauenburgTransitionFade {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+
+    #schauenburgScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 45;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #000;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 620ms ease-in-out, visibility 0s linear 620ms;
+    }
+
+    #schauenburgScreen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 620ms ease-in-out;
+    }
+
+    #schauenburgOverview {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      object-fit: contain;
+      object-position: center;
+      user-select: none;
+      pointer-events: none;
+      background: #000;
+    }
+
   </style>
 </head>
 <body>
@@ -891,6 +1038,17 @@
     <audio id="renchWaveSound" src="rench-wellenrauschen.wav" preload="auto"></audio>
   </div>
 
+
+  <div id="schauenburgTransition" aria-hidden="true">
+    <div id="schauenburgSpiral"></div>
+    <img id="friedrichBockTransition" src="friedrich-bock.png" alt="">
+    <audio id="schauenburgHorn" src="angriffshorn.wav" preload="auto"></audio>
+  </div>
+
+  <section id="schauenburgScreen" aria-label="Belagerung der Schauenburg 1432" aria-hidden="true">
+    <img id="schauenburgOverview" src="schauenburg-belagerung.png" alt="Belagerung der Schauenburg 1432">
+  </section>
+
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
     <div id="warenzugWorld">
       <img id="warenzugBackground" src="warenzug-ebene.png" alt="">
@@ -932,6 +1090,7 @@
     const selectionMusic = document.getElementById("selectionMusic");
     const titleHotspotOne = document.getElementById("titleHotspotOne");
     const titleHotspotTwo = document.getElementById("titleHotspotTwo");
+    const titleHotspotThree = document.getElementById("titleHotspotThree");
     const renchHubScreen = document.getElementById("renchHubScreen");
     const renchBackButton = document.getElementById("renchBackButton");
     const renchWaterTransition = document.getElementById("renchWaterTransition");
@@ -943,6 +1102,9 @@
     const joergHoldPlayer = document.getElementById("joergHoldPlayer");
     const joergGroundPlayer = document.getElementById("joergGroundPlayer");
     const gameReturnHotspot = document.getElementById("gameReturnHotspot");
+    const schauenburgTransition = document.getElementById("schauenburgTransition");
+    const schauenburgScreen = document.getElementById("schauenburgScreen");
+    const schauenburgHorn = document.getElementById("schauenburgHorn");
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -967,6 +1129,8 @@
     let warenzugOpen = false;
     let renchHubOpen = false;
     let renchHubTransitioning = false;
+    let schauenburgOpen = false;
+    let schauenburgTransitioning = false;
     let gameFrameRequest = null;
     let gamePreviousTime = performance.now();
     let playerX = 0.10;
@@ -1297,7 +1461,7 @@
 
         const targetSelection = isMuted
           ? 0
-          : (selectionOpen && !warenzugOpen)
+          : (selectionOpen && !warenzugOpen && !schauenburgOpen)
             ? MUSIC_MAX_VOLUME
             : 0;
 
@@ -1449,6 +1613,52 @@
         renchHubScreen.setAttribute("aria-hidden", "true");
         renchHubTransitioning = false;
       }, 540);
+    }
+
+
+    function openSchauenburgScreen() {
+      if (
+        schauenburgOpen ||
+        schauenburgTransitioning ||
+        selectionTransitioning ||
+        warenzugOpen ||
+        renchHubOpen
+      ) return;
+
+      schauenburgTransitioning = true;
+      schauenburgOpen = true;
+
+      schauenburgTransition.classList.remove("active", "fade-out");
+      void schauenburgTransition.offsetWidth;
+      schauenburgTransition.classList.add("active");
+      schauenburgTransition.setAttribute("aria-hidden", "false");
+
+      if (!isMuted && schauenburgHorn) {
+        schauenburgHorn.pause();
+        schauenburgHorn.currentTime = 0;
+        schauenburgHorn.volume = 0.72;
+        schauenburgHorn.play().catch(() => {});
+      }
+
+      /* Nach der rotierenden Schurkenvorstellung bleibt Friedrich kurz vollkommen stehen. */
+      window.setTimeout(() => {
+        selectionOpen = false;
+        selectionScreen.classList.remove("active");
+        selectionScreen.setAttribute("aria-hidden", "true");
+
+        schauenburgScreen.classList.add("active");
+        schauenburgScreen.setAttribute("aria-hidden", "false");
+      }, 2300);
+
+      window.setTimeout(() => {
+        schauenburgTransition.classList.add("fade-out");
+      }, 2300);
+
+      window.setTimeout(() => {
+        schauenburgTransition.classList.remove("active", "fade-out");
+        schauenburgTransition.setAttribute("aria-hidden", "true");
+        schauenburgTransitioning = false;
+      }, 2960);
     }
 
     function openWarenzugScreen() {
@@ -1654,6 +1864,11 @@
     titleHotspotTwo.addEventListener("click", event => {
       event.preventDefault();
       openWarenzugScreen();
+    });
+
+    titleHotspotThree.addEventListener("click", event => {
+      event.preventDefault();
+      openSchauenburgScreen();
     });
 
     document.addEventListener("keydown", event => {
