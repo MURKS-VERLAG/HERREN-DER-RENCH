@@ -1270,6 +1270,77 @@
       pointer-events: none;
     }
 
+    #schauenburgKillCounter {
+      position: absolute;
+      z-index: 14;
+      top: 0.8%;
+      right: 0.8%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: clamp(5px, .55vw, 10px);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+
+    #schauenburgScreen.active #schauenburgKillCounter { opacity: 1; }
+
+    #schauenburgKillValue {
+      color: rgba(245,245,240,.98);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(28px, 3.3vw, 58px);
+      font-weight: 800;
+      line-height: 1;
+      text-shadow: 0 2px 1px rgba(0,0,0,.96), 0 0 6px rgba(0,0,0,.92);
+    }
+
+    #schauenburgKillIcon {
+      width: clamp(52px, 6.5vw, 104px);
+      height: auto;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,.68));
+    }
+
+    #schauenburgGameOverLayer {
+      position: fixed;
+      inset: 0;
+      z-index: 240;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #000;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 1000ms ease-in-out, visibility 0s linear 1000ms;
+    }
+
+    #schauenburgGameOverLayer.visible {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 1000ms ease-in-out;
+    }
+
+    #schauenburgDefeatImage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      object-position: center;
+      background: #000;
+      opacity: 0;
+      transition: opacity 900ms ease-in-out;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    #schauenburgGameOverLayer.show-image #schauenburgDefeatImage { opacity: 1; }
+
     #schauenburgEnemyLayer,
     #schauenburgEffectLayer {
       position: absolute;
@@ -1712,6 +1783,11 @@
       <img id="schauenburgHealthImage" src="schauenburg-lebensleiste.png" alt="">
     </div>
 
+    <div id="schauenburgKillCounter" aria-label="Besiegte Gegner">
+      <span id="schauenburgKillValue">0</span>
+      <img id="schauenburgKillIcon" src="schauenburg-killcount.png" alt="">
+    </div>
+
     <div id="schauenburgEnemyLayer" aria-hidden="true"></div>
     <div id="schauenburgEffectLayer" aria-hidden="true"></div>
 
@@ -1739,6 +1815,10 @@
     <audio id="schauenburgHumanHitThree" src="arrwdth_01.mp3" preload="auto"></audio>
     <audio id="schauenburgHumanHitFour" src="arrwdth_04.mp3" preload="auto"></audio>
     <audio id="schauenburgHumanHitFive" src="arrwdth_03.mp3" preload="auto"></audio>
+
+    <div id="schauenburgGameOverLayer" aria-hidden="true">
+      <img id="schauenburgDefeatImage" src="schauenburg-niederlage.png" alt="">
+    </div>
   </section>
 
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
@@ -1802,6 +1882,8 @@
     const schauenburgChicken = document.getElementById("schauenburgChicken");
     const schauenburgBow = document.getElementById("schauenburgBow");
     const schauenburgHealthLoss = document.getElementById("schauenburgHealthLoss");
+    const schauenburgKillValue = document.getElementById("schauenburgKillValue");
+    const schauenburgGameOverLayer = document.getElementById("schauenburgGameOverLayer");
     const schauenburgEnemyLayer = document.getElementById("schauenburgEnemyLayer");
     const schauenburgEffectLayer = document.getElementById("schauenburgEffectLayer");
     const schauenburgPickaxe = document.getElementById("schauenburgPickaxe");
@@ -1857,6 +1939,9 @@
     const schauenburgKeys = new Set();
     let schauenburgChickenReady = true;
     let schauenburgHealth = 100;
+    let schauenburgKillCount = 0;
+    let schauenburgGameOverActive = false;
+    let schauenburgGameOverTimer = null;
     let schauenburgEnemySequence = 0;
     let schauenburgEnemyId = 0;
     let schauenburgSpawnTimers = [];
@@ -2431,10 +2516,94 @@
 
 
 
+
+    function updateSchauenburgKillCount() {
+      if (schauenburgKillValue) {
+        schauenburgKillValue.textContent = String(schauenburgKillCount);
+      }
+    }
+
+    function registerSchauenburgKill(enemy) {
+      if (
+        schauenburgGameOverActive ||
+        !enemy ||
+        enemy.killCounted ||
+        (
+          enemy.kind !== "ritter" &&
+          enemy.kind !== "archer" &&
+          enemy.kind !== "rammbock"
+        )
+      ) return;
+
+      enemy.killCounted = true;
+      schauenburgKillCount += 1;
+      updateSchauenburgKillCount();
+    }
+
+    function triggerSchauenburgGameOver() {
+      if (schauenburgGameOverActive || !schauenburgOpen) return;
+
+      schauenburgGameOverActive = true;
+      schauenburgKeys.clear();
+      schauenburgScreen.classList.remove("aiming");
+      clearSchauenburgSiege();
+
+      schauenburgGameOverLayer.classList.remove("visible", "show-image");
+      schauenburgGameOverLayer.setAttribute("aria-hidden", "false");
+      void schauenburgGameOverLayer.offsetWidth;
+      schauenburgGameOverLayer.classList.add("visible");
+
+      window.setTimeout(() => {
+        if (schauenburgGameOverActive) {
+          schauenburgGameOverLayer.classList.add("show-image");
+        }
+      }, 1050);
+
+      schauenburgGameOverTimer = window.setTimeout(() => {
+        schauenburgGameOverTimer = null;
+        if (!schauenburgGameOverActive) return;
+
+        schauenburgGameOverLayer.classList.remove("show-image");
+
+        window.setTimeout(() => {
+          if (!schauenburgGameOverActive) return;
+
+          selectionOpen = true;
+          selectionScreen.classList.add("active");
+          selectionScreen.setAttribute("aria-hidden", "false");
+          schauenburgScreen.classList.remove("active", "aiming");
+          schauenburgScreen.setAttribute("aria-hidden", "true");
+          schauenburgGameOverLayer.classList.remove("visible");
+
+          window.setTimeout(() => {
+            schauenburgOpen = false;
+            schauenburgTransitioning = false;
+            schauenburgGameOverActive = false;
+            schauenburgHealth = 100;
+            schauenburgKillCount = 0;
+            updateSchauenburgHealth();
+            updateSchauenburgKillCount();
+
+            if (friedrichSchreiber) {
+              friedrichSchreiber.src = "friedrich-schreiber.png";
+              friedrichSchreiber.classList.remove("friedrich-event-switching");
+            }
+
+            schauenburgGameOverLayer.classList.remove("show-image");
+            schauenburgGameOverLayer.setAttribute("aria-hidden", "true");
+          }, 1050);
+        }, 1000);
+      }, 11050);
+    }
+
     function updateSchauenburgHealth() {
       const lost = Math.max(0, Math.min(100, 100 - schauenburgHealth));
       /* Der rote Innenbalken reicht ungefähr über 78.5 % der Grafikbreite. */
       schauenburgHealthLoss.style.width = `${lost * 0.785}%`;
+
+      if (schauenburgHealth <= 0 && !schauenburgGameOverActive) {
+        triggerSchauenburgGameOver();
+      }
     }
 
     function clearSchauenburgSiege() {
@@ -2489,9 +2658,22 @@
 
     function startSchauenburgSiege() {
       clearSchauenburgSiege();
+
+      if (schauenburgGameOverTimer !== null) {
+        window.clearTimeout(schauenburgGameOverTimer);
+        schauenburgGameOverTimer = null;
+      }
+
+      schauenburgGameOverActive = false;
       schauenburgHealth = 100;
+      schauenburgKillCount = 0;
       schauenburgEnemySequence = 0;
       schauenburgArcherSequence = 0;
+
+      schauenburgGameOverLayer.classList.remove("visible", "show-image");
+      schauenburgGameOverLayer.setAttribute("aria-hidden", "true");
+
+      updateSchauenburgKillCount();
       updateSchauenburgHealth();
       scheduleSchauenburgMinute();
       scheduleNextSchauenburgRammbock();
@@ -2514,7 +2696,7 @@
     }
 
     function scheduleSchauenburgMinute() {
-      if (!schauenburgOpen || schauenburgTransitioning) return;
+      if (!schauenburgOpen || schauenburgTransitioning || schauenburgGameOverActive) return;
 
       const times = createRandomMinuteSpawnTimes();
       schauenburgSpawnTimers = times.map(delay =>
@@ -2970,7 +3152,7 @@
     }
 
     function scheduleSchauenburgArcherMinute() {
-      if (!schauenburgOpen || schauenburgTransitioning) return;
+      if (!schauenburgOpen || schauenburgTransitioning || schauenburgGameOverActive) return;
 
       const times = createRandomArcherMinuteSpawnTimes();
       schauenburgArcherSpawnTimers = times.map(delay =>
@@ -2988,7 +3170,7 @@
     }
 
     function spawnSchauenburgArcher() {
-      if (!schauenburgOpen || schauenburgTransitioning || !schauenburgEnemyLayer) return;
+      if (!schauenburgOpen || schauenburgTransitioning || schauenburgGameOverActive || !schauenburgEnemyLayer) return;
 
       const type = schauenburgArcherSequence % 2 === 0 ? 1 : 2;
       schauenburgArcherSequence += 1;
@@ -3025,6 +3207,7 @@
         type,
         element,
         state: "running",
+        killCounted: false,
         cancelled: false,
         animation: null,
         shotTimer: null,
@@ -3289,7 +3472,7 @@
     }
 
     function spawnSchauenburgRammbock() {
-      if (!schauenburgOpen || schauenburgTransitioning || !schauenburgEnemyLayer) return;
+      if (!schauenburgOpen || schauenburgTransitioning || schauenburgGameOverActive || !schauenburgEnemyLayer) return;
 
       const id = ++schauenburgEnemyId;
       const element = document.createElement("img");
@@ -3317,6 +3500,7 @@
         hits: 0,
         element,
         state: "running",
+        killCounted: false,
         cancelled: false,
         animation: null,
         route
@@ -3360,6 +3544,8 @@
       enemy.element.classList.add("hit");
 
       if (enemy.hits < 10) return;
+
+      registerSchauenburgKill(enemy);
 
       enemy.state = "destroyed";
       enemy.cancelled = true;
@@ -3419,7 +3605,7 @@
     }
 
     function spawnFriedrichBockReinforcementWave() {
-      if (!schauenburgOpen || schauenburgTransitioning) return;
+      if (!schauenburgOpen || schauenburgTransitioning || schauenburgGameOverActive) return;
 
       /*
         Exakt 20 Ritter erscheinen im selben Moment, aber breit über die
@@ -3444,7 +3630,7 @@
     }
 
     function spawnSchauenburgEnemy(forcedType = null, forcedRoute = null) {
-      if (!schauenburgOpen || schauenburgTransitioning || !schauenburgEnemyLayer) return;
+      if (!schauenburgOpen || schauenburgTransitioning || schauenburgGameOverActive || !schauenburgEnemyLayer) return;
 
       const type =
         forcedType === 1 || forcedType === 2
@@ -3484,6 +3670,7 @@
         type,
         element,
         state: "running",
+        killCounted: false,
         cancelled: false,
         animation: null,
         route
@@ -3573,6 +3760,7 @@
 
     function hitSchauenburgEnemy(enemy) {
       if (
+        schauenburgGameOverActive ||
         !enemy ||
         !enemy.element ||
         (enemy.state !== "running" && enemy.state !== "shooting")
@@ -3588,6 +3776,7 @@
       }
 
       playRandomSchauenburgHumanHitSound();
+      registerSchauenburgKill(enemy);
 
       enemy.state = "dead";
       enemy.cancelled = true;
@@ -3778,9 +3967,17 @@
     }
 
     function closeSchauenburgScreen() {
-      if (!schauenburgOpen || schauenburgTransitioning) return;
+      if (!schauenburgOpen || schauenburgTransitioning || schauenburgGameOverActive) return;
 
       schauenburgTransitioning = true;
+
+      if (schauenburgGameOverTimer !== null) {
+        window.clearTimeout(schauenburgGameOverTimer);
+        schauenburgGameOverTimer = null;
+      }
+
+      schauenburgGameOverLayer.classList.remove("visible", "show-image");
+      schauenburgGameOverLayer.setAttribute("aria-hidden", "true");
       schauenburgKeys.clear();
       clearSchauenburgSiege();
       schauenburgScreen.classList.remove("aiming");
