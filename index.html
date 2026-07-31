@@ -1425,32 +1425,120 @@
       filter: drop-shadow(-3px 4px 4px rgba(0,0,0,.72));
     }
 
-    #schauenburgCrossbowPurchasedX {
-      position: absolute;
-      inset: 7% 0 2% 7%;
-      display: none;
-      z-index: 2;
-    }
-
-    #schauenburgCrossbowPurchasedX::before,
-    #schauenburgCrossbowPurchasedX::after {
-      content: "";
-      position: absolute;
-      left: 48%;
-      top: -2%;
-      width: clamp(7px, .7vw, 12px);
-      height: 104%;
-      border-radius: 99px;
-      background: #9e1119;
-      box-shadow: 0 0 0 2px rgba(28,0,0,.75), 0 0 7px rgba(0,0,0,.85);
-      transform-origin: center;
-    }
-
-    #schauenburgCrossbowPurchasedX::before { transform: rotate(42deg); }
-    #schauenburgCrossbowPurchasedX::after  { transform: rotate(-42deg); }
-    #schauenburgCrossbowShop.purchased #schauenburgCrossbowPurchasedX { display: block; }
     #schauenburgCrossbowShop.purchased #schauenburgCrossbowKey,
-    #schauenburgCrossbowShop.purchased #schauenburgCrossbowCosts { opacity: .38; }
+    #schauenburgCrossbowShop.purchased #schauenburgCrossbowCosts,
+    #schauenburgSpearmanShop.purchased #schauenburgSpearmanKey,
+    #schauenburgSpearmanShop.purchased #schauenburgSpearmanCosts {
+      opacity: .38;
+      filter: grayscale(1);
+    }
+
+    /* Aktive Armbrustposition: exakt im vormals grün markierten Bereich. */
+    #schauenburgCrossbowDefender {
+      position: absolute;
+      z-index: 8;
+      left: 42.1%;
+      top: 43.2%;
+      width: clamp(72px, 8.2vw, 132px);
+      height: auto;
+      display: none;
+      transform: translate3d(-50%, -100%, 0);
+      transform-origin: 50% 100%;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(0 5px 5px rgba(0,0,0,.66));
+    }
+
+    #schauenburgCrossbowDefender.visible { display: block; }
+
+    /* Speerträger-Shop direkt unter dem Armbrustschützen. */
+    #schauenburgSpearmanShop {
+      position: absolute;
+      z-index: 14;
+      top: 35.0%;
+      right: .7%;
+      width: clamp(160px, 17vw, 285px);
+      min-height: clamp(115px, 15vw, 235px);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: clamp(4px, .45vw, 8px);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+
+    #schauenburgScreen.active #schauenburgSpearmanShop { opacity: 1; }
+
+    #schauenburgSpearmanKey {
+      width: clamp(27px, 2.6vw, 42px);
+      height: clamp(27px, 2.6vw, 42px);
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 2px solid rgba(225,220,205,.92);
+      outline: 2px solid rgba(20,20,18,.96);
+      background: rgba(12,12,11,.86);
+      color: #f3efe2;
+      font: 800 clamp(18px, 2vw, 31px)/1 Georgia, serif;
+      box-shadow: 0 3px 8px rgba(0,0,0,.72);
+    }
+
+    #schauenburgSpearmanCosts {
+      display: grid;
+      gap: 3px;
+      flex: 0 0 auto;
+      color: #f3efe2;
+      font: 800 clamp(15px, 1.55vw, 25px)/1 Georgia, serif;
+      text-shadow: 0 2px 2px #000, 0 0 5px #000;
+    }
+
+    .schauenburg-spearman-cost {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    #schauenburgSpearmanUnitWrap {
+      position: relative;
+      width: clamp(74px, 8.3vw, 134px);
+      height: clamp(105px, 13vw, 205px);
+      flex: 0 0 auto;
+    }
+
+    #schauenburgSpearmanUnit {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      object-position: right bottom;
+      filter: drop-shadow(-3px 4px 4px rgba(0,0,0,.72));
+    }
+
+    /* Aktiver Speerträger: exakt im vormals rot markierten Mauerbereich. */
+    #schauenburgSpearmanDefender {
+      position: absolute;
+      z-index: 8;
+      left: 55.1%;
+      top: 50.2%;
+      width: clamp(76px, 8.7vw, 140px);
+      height: auto;
+      display: none;
+      transform: translate3d(-50%, -100%, 0);
+      transform-origin: 50% 100%;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(0 5px 5px rgba(0,0,0,.68));
+    }
+
+    #schauenburgSpearmanDefender.visible { display: block; }
 
     .schauenburg-crossbow-bolt {
       position: absolute;
@@ -1949,20 +2037,34 @@
 
     <div id="schauenburgHonorCounter" aria-label="Ehre">
       <span id="schauenburgHonorValue">0</span>
-      <img id="schauenburgHonorIcon" src="schauenburg-ehre-lorbeer.png" alt="">
+      <img id="schauenburgHonorIcon" src="schauenburg-ehre-kelch.png" alt="">
     </div>
 
     <div id="schauenburgCrossbowShop" aria-label="Armbrustschütze kaufen: 40 Gold und 50 Ehre">
       <span id="schauenburgCrossbowKey">1</span>
       <span id="schauenburgCrossbowCosts">
         <span class="schauenburg-crossbow-cost"><span class="schauenburg-gold-coin"></span><span>40</span></span>
-        <span class="schauenburg-crossbow-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-lorbeer.png" alt=""><span>50</span></span>
+        <span class="schauenburg-crossbow-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-kelch.png" alt=""><span>50</span></span>
       </span>
       <span id="schauenburgCrossbowUnitWrap">
         <img id="schauenburgCrossbowUnit" src="schauenburg-armbrust-idle.png" alt="">
-        <span id="schauenburgCrossbowPurchasedX"></span>
       </span>
     </div>
+
+    <img id="schauenburgCrossbowDefender" src="schauenburg-armbrust-idle.png" alt="">
+
+    <div id="schauenburgSpearmanShop" aria-label="Speerträger kaufen: 35 Gold und 40 Ehre">
+      <span id="schauenburgSpearmanKey">2</span>
+      <span id="schauenburgSpearmanCosts">
+        <span class="schauenburg-spearman-cost"><span class="schauenburg-gold-coin"></span><span>35</span></span>
+        <span class="schauenburg-spearman-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-kelch.png" alt=""><span>40</span></span>
+      </span>
+      <span id="schauenburgSpearmanUnitWrap">
+        <img id="schauenburgSpearmanUnit" src="schauenburg-speertraeger-idle.png" alt="">
+      </span>
+    </div>
+
+    <img id="schauenburgSpearmanDefender" src="schauenburg-speertraeger-idle.png" alt="">
 
     <div id="schauenburgEnemyLayer" aria-hidden="true"></div>
     <div id="schauenburgEffectLayer" aria-hidden="true"></div>
@@ -2062,6 +2164,10 @@
     const schauenburgHonorValue = document.getElementById("schauenburgHonorValue");
     const schauenburgCrossbowShop = document.getElementById("schauenburgCrossbowShop");
     const schauenburgCrossbowUnit = document.getElementById("schauenburgCrossbowUnit");
+    const schauenburgCrossbowDefender = document.getElementById("schauenburgCrossbowDefender");
+    const schauenburgSpearmanShop = document.getElementById("schauenburgSpearmanShop");
+    const schauenburgSpearmanUnit = document.getElementById("schauenburgSpearmanUnit");
+    const schauenburgSpearmanDefender = document.getElementById("schauenburgSpearmanDefender");
     const schauenburgGameOverLayer = document.getElementById("schauenburgGameOverLayer");
     const schauenburgEnemyLayer = document.getElementById("schauenburgEnemyLayer");
     const schauenburgEffectLayer = document.getElementById("schauenburgEffectLayer");
@@ -2125,6 +2231,11 @@
     let schauenburgCrossbowState = "idle";
     let schauenburgCrossbowTimer = null;
     let schauenburgCrossbowWatchTimer = null;
+
+    const SCHAUENBURG_SPEARMAN_GOLD_COST = 35;
+    const SCHAUENBURG_SPEARMAN_HONOR_COST = 40;
+    let schauenburgSpearmanPurchased = false;
+    let schauenburgSpearmanAttackTimer = null;
     let schauenburgGameOverActive = false;
     let schauenburgGameOverTimer = null;
     let schauenburgEnemySequence = 0;
@@ -2742,6 +2853,10 @@
       schauenburgCrossbowState = "idle";
       if (schauenburgCrossbowShop) schauenburgCrossbowShop.classList.remove("purchased");
       if (schauenburgCrossbowUnit) schauenburgCrossbowUnit.src = "schauenburg-armbrust-idle.png";
+      if (schauenburgCrossbowDefender) {
+        schauenburgCrossbowDefender.src = "schauenburg-armbrust-idle.png";
+        schauenburgCrossbowDefender.classList.remove("visible");
+      }
     }
 
     function getSchauenburgCrossbowTarget() {
@@ -2765,9 +2880,9 @@
     }
 
     function createSchauenburgCrossbowBolt(target, willHit) {
-      if (!target || !target.element || !schauenburgCrossbowUnit) return;
+      if (!target || !target.element || !schauenburgCrossbowDefender) return;
       const screenRect = schauenburgScreen.getBoundingClientRect();
-      const unitRect = schauenburgCrossbowUnit.getBoundingClientRect();
+      const unitRect = schauenburgCrossbowDefender.getBoundingClientRect();
       const targetRect = target.element.getBoundingClientRect();
       const startX = unitRect.left - screenRect.left + unitRect.width * .28;
       const startY = unitRect.top - screenRect.top + unitRect.height * .42;
@@ -2811,7 +2926,7 @@
         if (target) fireSchauenburgCrossbowDefender(target);
         else {
           schauenburgCrossbowState = "idle";
-          schauenburgCrossbowUnit.src = "schauenburg-armbrust-idle.png";
+          schauenburgCrossbowDefender.src = "schauenburg-armbrust-idle.png";
           scheduleSchauenburgCrossbowWatch(140);
         }
       }, delay);
@@ -2820,7 +2935,7 @@
     function fireSchauenburgCrossbowDefender(target) {
       if (!schauenburgCrossbowPurchased || schauenburgCrossbowState !== "idle" || !target) return;
       schauenburgCrossbowState = "shooting";
-      schauenburgCrossbowUnit.src = "schauenburg-armbrust-schuss.png";
+      schauenburgCrossbowDefender.src = "schauenburg-armbrust-schuss.png";
 
       if (!isMuted && schauenburgBow) {
         const shot = schauenburgBow.cloneNode();
@@ -2835,14 +2950,14 @@
         schauenburgCrossbowTimer = null;
         if (!schauenburgCrossbowPurchased || schauenburgGameOverActive) return;
         schauenburgCrossbowState = "reloading";
-        schauenburgCrossbowUnit.src = "schauenburg-armbrust-nachladen.png";
+        schauenburgCrossbowDefender.src = "schauenburg-armbrust-nachladen.png";
 
         /* Nachladen dauert exakt zwei Sekunden. */
         schauenburgCrossbowTimer = window.setTimeout(() => {
           schauenburgCrossbowTimer = null;
           if (!schauenburgCrossbowPurchased || schauenburgGameOverActive) return;
           schauenburgCrossbowState = "idle";
-          schauenburgCrossbowUnit.src = "schauenburg-armbrust-idle.png";
+          schauenburgCrossbowDefender.src = "schauenburg-armbrust-idle.png";
           scheduleSchauenburgCrossbowWatch(0);
         }, 2000);
       }, 1000);
@@ -2864,8 +2979,117 @@
       schauenburgCrossbowState = "idle";
       updateSchauenburgHonor();
       schauenburgCrossbowShop.classList.add("purchased");
-      schauenburgCrossbowUnit.src = "schauenburg-armbrust-idle.png";
+      schauenburgCrossbowDefender.src = "schauenburg-armbrust-idle.png";
+      schauenburgCrossbowDefender.classList.add("visible");
       scheduleSchauenburgCrossbowWatch(0);
+    }
+
+
+    function resetSchauenburgSpearmanDefender() {
+      if (schauenburgSpearmanAttackTimer !== null) {
+        window.clearTimeout(schauenburgSpearmanAttackTimer);
+        schauenburgSpearmanAttackTimer = null;
+      }
+
+      schauenburgSpearmanPurchased = false;
+
+      if (schauenburgSpearmanShop) {
+        schauenburgSpearmanShop.classList.remove("purchased");
+      }
+
+      if (schauenburgSpearmanUnit) {
+        schauenburgSpearmanUnit.src = "schauenburg-speertraeger-idle.png";
+      }
+
+      if (schauenburgSpearmanDefender) {
+        schauenburgSpearmanDefender.src = "schauenburg-speertraeger-idle.png";
+        schauenburgSpearmanDefender.classList.remove("visible");
+      }
+    }
+
+    function buySchauenburgSpearmanDefender() {
+      if (
+        !schauenburgOpen ||
+        schauenburgTransitioning ||
+        schauenburgGameOverActive ||
+        friedrichBockMinigameActive ||
+        schauenburgSpearmanPurchased ||
+        schauenburgGold < SCHAUENBURG_SPEARMAN_GOLD_COST ||
+        schauenburgHonor < SCHAUENBURG_SPEARMAN_HONOR_COST
+      ) return;
+
+      schauenburgGold -= SCHAUENBURG_SPEARMAN_GOLD_COST;
+      schauenburgHonor -= SCHAUENBURG_SPEARMAN_HONOR_COST;
+      schauenburgSpearmanPurchased = true;
+
+      updateSchauenburgHonor();
+      schauenburgSpearmanShop.classList.add("purchased");
+      schauenburgSpearmanDefender.src = "schauenburg-speertraeger-idle.png";
+      schauenburgSpearmanDefender.classList.add("visible");
+    }
+
+    function animateSchauenburgSpearmanStrike() {
+      if (!schauenburgSpearmanPurchased || !schauenburgSpearmanDefender) return;
+
+      if (schauenburgSpearmanAttackTimer !== null) {
+        window.clearTimeout(schauenburgSpearmanAttackTimer);
+      }
+
+      schauenburgSpearmanDefender.src = "schauenburg-speertraeger-stich.png";
+
+      schauenburgSpearmanAttackTimer = window.setTimeout(() => {
+        schauenburgSpearmanAttackTimer = null;
+        if (!schauenburgSpearmanPurchased || schauenburgGameOverActive) return;
+        schauenburgSpearmanDefender.src = "schauenburg-speertraeger-idle.png";
+      }, 450);
+    }
+
+    function killSchauenburgKnightBySpearman(enemy) {
+      if (
+        !enemy ||
+        enemy.kind !== "ritter" ||
+        enemy.state !== "running" ||
+        !enemy.element
+      ) return false;
+
+      registerSchauenburgKill(enemy);
+
+      enemy.state = "dead";
+      enemy.cancelled = true;
+
+      const screenRect = schauenburgScreen.getBoundingClientRect();
+      const enemyRect = enemy.element.getBoundingClientRect();
+      const centerX = enemyRect.left - screenRect.left + enemyRect.width * 0.5;
+      const bottomY = enemyRect.bottom - screenRect.top;
+
+      if (enemy.animation) enemy.animation.cancel();
+
+      enemy.element.classList.remove("at-wall");
+      enemy.element.classList.add("dead");
+      enemy.element.src = enemy.type === 1
+        ? "schauenburg-ritter-1-getroffen.png"
+        : "schauenburg-ritter-2-getroffen.png";
+      enemy.element.style.transform = "translate3d(-50%,-74%,0)";
+      enemy.element.style.left = `${centerX}px`;
+      enemy.element.style.top = `${bottomY}px`;
+
+      window.setTimeout(() => removeSchauenburgEnemy(enemy), 5000);
+      return true;
+    }
+
+    function trySchauenburgSpearmanDefense(enemy) {
+      if (
+        !schauenburgSpearmanPurchased ||
+        schauenburgGameOverActive ||
+        !enemy ||
+        enemy.kind !== "ritter" ||
+        enemy.state !== "running"
+      ) return false;
+
+      animateSchauenburgSpearmanStrike();
+
+      if (Math.random() >= 0.25) return false;
+      return killSchauenburgKnightBySpearman(enemy);
     }
 
     function registerSchauenburgKill(enemy) {
@@ -2999,6 +3223,10 @@
         window.clearTimeout(schauenburgCrossbowWatchTimer);
         schauenburgCrossbowWatchTimer = null;
       }
+      if (schauenburgSpearmanAttackTimer !== null) {
+        window.clearTimeout(schauenburgSpearmanAttackTimer);
+        schauenburgSpearmanAttackTimer = null;
+      }
 
       schauenburgEnemies.forEach(enemy => {
         enemy.cancelled = true;
@@ -3029,6 +3257,7 @@
       schauenburgHonor = 0;
       schauenburgGold = 420;
       resetSchauenburgCrossbowDefender();
+      resetSchauenburgSpearmanDefender();
       schauenburgEnemySequence = 0;
       schauenburgArcherSequence = 0;
 
@@ -4071,6 +4300,11 @@
     function enemyReachedSchauenburgWall(enemy) {
       if (!enemy || enemy.state !== "running" || !enemy.element) return;
 
+      /* Speerträger erhält bei jedem ankommenden Ritter genau einen 25-%-Versuch. */
+      if (enemy.kind === "ritter" && trySchauenburgSpearmanDefense(enemy)) {
+        return;
+      }
+
       enemy.state = "wall";
       if (enemy.animation) enemy.animation.cancel();
 
@@ -4598,12 +4832,17 @@
     window.addEventListener("keydown", event => {
       if (!schauenburgOpen || schauenburgTransitioning) return;
 
-      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space", "Digit1", "Numpad1"].includes(event.code)) {
+      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space", "Digit1", "Numpad1", "Digit2", "Numpad2"].includes(event.code)) {
         event.preventDefault();
       }
 
-      if ((event.code === "Digit1" || event.code === "Numpad1") && !event.repeat) {
+      if ((event.code === "Digit1" || event.code === "Numpad1") && !event.repeat && !friedrichBockMinigameActive) {
         buySchauenburgCrossbowDefender();
+        return;
+      }
+
+      if ((event.code === "Digit2" || event.code === "Numpad2") && !event.repeat && !friedrichBockMinigameActive) {
+        buySchauenburgSpearmanDefender();
         return;
       }
 
