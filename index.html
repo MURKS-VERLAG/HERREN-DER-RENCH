@@ -1261,7 +1261,7 @@
       position: absolute;
       z-index: 3;
       right: 8.6%;
-      top: 42.8%;
+      top: 48.5%;
       width: 0%;
       height: 7.2%;
       background: #050505;
@@ -1906,6 +1906,9 @@
 
     const friedrichBockSuccessPreload = new Image();
     friedrichBockSuccessPreload.src = "friedrich-bock-tuer-richtig.png?v=2";
+
+    const friedrichBockFailurePreload = new Image();
+    friedrichBockFailurePreload.src = "friedrich-bock-tuer-fehler-v2.png?v=2";
 
     const SPACE_HOLD_DELAY = 220;
     let spacePressed = false;
@@ -2701,7 +2704,7 @@
       }
 
       if (friedrichBockMinigameImage) {
-        friedrichBockMinigameImage.src = "friedrich-bock-tuer-fehler.png";
+        friedrichBockMinigameImage.src = "friedrich-bock-tuer-fehler-v2.png?v=2";
       }
 
       playFriedrichBockOneShot(friedrichBockPainSound, 0.96);
