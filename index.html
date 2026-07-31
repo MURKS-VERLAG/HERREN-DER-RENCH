@@ -959,6 +959,177 @@
       background: #000;
     }
 
+
+    /* Ergänzungen ausschließlich im fertigen Schauenburg-Belagerungsbild. */
+    #schauenburgScreen {
+      cursor: default;
+    }
+
+    #schauenburgScreen.aiming {
+      cursor: none;
+    }
+
+    #schauenburgAim {
+      position: absolute;
+      z-index: 7;
+      left: 50%;
+      top: 50%;
+      width: 34px;
+      height: 34px;
+      transform: translate3d(-50%, -50%, 0);
+      pointer-events: none;
+      opacity: 0;
+      will-change: left, top, transform;
+      filter:
+        drop-shadow(0 0 1px rgba(255,255,255,.95))
+        drop-shadow(0 0 2px rgba(0,0,0,.95));
+    }
+
+    #schauenburgScreen.active #schauenburgAim {
+      opacity: 1;
+    }
+
+    #schauenburgAim::before,
+    #schauenburgAim::after {
+      content: "";
+      position: absolute;
+      background: rgba(245,245,240,.94);
+      box-shadow: 0 0 1px #000;
+    }
+
+    #schauenburgAim::before {
+      left: 16px;
+      top: 0;
+      width: 2px;
+      height: 34px;
+    }
+
+    #schauenburgAim::after {
+      left: 0;
+      top: 16px;
+      width: 34px;
+      height: 2px;
+    }
+
+    #schauenburgAimRing {
+      position: absolute;
+      left: 9px;
+      top: 9px;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(245,245,240,.94);
+      border-radius: 50%;
+      box-shadow: 0 0 1px #000;
+    }
+
+    #schauenburgBackFlag {
+      position: absolute;
+      z-index: 12;
+      left: 1.2%;
+      bottom: 1.5%;
+      width: 34px;
+      height: 42px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #schauenburgBackFlag .flag-pole {
+      position: absolute;
+      left: 5px;
+      bottom: 2px;
+      width: 2px;
+      height: 36px;
+      background: #111;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.65);
+    }
+
+    #schauenburgBackFlag .flag-cloth {
+      position: absolute;
+      left: 7px;
+      top: 3px;
+      width: 23px;
+      height: 15px;
+      background: #fff;
+      border: 1.5px solid #111;
+      clip-path: polygon(0 0, 100% 12%, 82% 50%, 100% 88%, 0 100%);
+      transform-origin: left center;
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    #schauenburgBackFlag:hover .flag-cloth,
+    #schauenburgBackFlag:focus-visible .flag-cloth {
+      transform: scale(1.09) skewY(-3deg);
+      filter: drop-shadow(0 0 4px rgba(255,255,255,.9));
+    }
+
+    .schauenburg-arrow {
+      position: absolute;
+      z-index: 8;
+      width: 74px;
+      height: 10px;
+      pointer-events: none;
+      transform-origin: 0 50%;
+      will-change: transform, opacity;
+    }
+
+    .schauenburg-arrow::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 4px;
+      width: 58px;
+      height: 2px;
+      background: #eee;
+      box-shadow: 0 0 1px #000;
+    }
+
+    .schauenburg-arrow::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 1px;
+      width: 0;
+      height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 12px solid #eee;
+      filter: drop-shadow(0 0 1px #000);
+    }
+
+    .schauenburg-arrow-tail {
+      position: absolute;
+      left: 0;
+      top: 1px;
+      width: 12px;
+      height: 8px;
+    }
+
+    .schauenburg-arrow-tail::before,
+    .schauenburg-arrow-tail::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 11px;
+      height: 3px;
+      background: #eee;
+      box-shadow: 0 0 1px #000;
+    }
+
+    .schauenburg-arrow-tail::before {
+      top: 0;
+      transform: skewX(-28deg);
+    }
+
+    .schauenburg-arrow-tail::after {
+      bottom: 0;
+      transform: skewX(28deg);
+    }
+
   </style>
 </head>
 <body>
@@ -1047,6 +1218,18 @@
 
   <section id="schauenburgScreen" aria-label="Belagerung der Schauenburg 1432" aria-hidden="true">
     <img id="schauenburgOverview" src="schauenburg-belagerung.png" alt="Belagerung der Schauenburg 1432">
+
+    <div id="schauenburgAim" aria-hidden="true">
+      <span id="schauenburgAimRing"></span>
+    </div>
+
+    <button id="schauenburgBackFlag" type="button" aria-label="Zurück zur Spielmodi-Auswahl" title="Zurück">
+      <span class="flag-pole"></span>
+      <span class="flag-cloth"></span>
+    </button>
+
+    <audio id="schauenburgChicken" src="huehner-gackern.wav" preload="auto"></audio>
+    <audio id="schauenburgBow" src="pfeil-und-bogen.wav" preload="auto"></audio>
   </section>
 
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
@@ -1105,6 +1288,10 @@
     const schauenburgTransition = document.getElementById("schauenburgTransition");
     const schauenburgScreen = document.getElementById("schauenburgScreen");
     const schauenburgHorn = document.getElementById("schauenburgHorn");
+    const schauenburgAim = document.getElementById("schauenburgAim");
+    const schauenburgBackFlag = document.getElementById("schauenburgBackFlag");
+    const schauenburgChicken = document.getElementById("schauenburgChicken");
+    const schauenburgBow = document.getElementById("schauenburgBow");
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -1131,6 +1318,12 @@
     let renchHubTransitioning = false;
     let schauenburgOpen = false;
     let schauenburgTransitioning = false;
+    let schauenburgAimX = 0.50;
+    let schauenburgAimY = 0.50;
+    let schauenburgAimFrame = null;
+    let schauenburgPreviousTime = performance.now();
+    const schauenburgKeys = new Set();
+    let schauenburgChickenReady = true;
     let gameFrameRequest = null;
     let gamePreviousTime = performance.now();
     let playerX = 0.10;
@@ -1636,7 +1829,7 @@
       if (!isMuted && schauenburgHorn) {
         schauenburgHorn.pause();
         schauenburgHorn.currentTime = 0;
-        schauenburgHorn.volume = 0.72;
+        schauenburgHorn.volume = 1.0;
         schauenburgHorn.play().catch(() => {});
       }
 
@@ -1658,7 +1851,111 @@
         schauenburgTransition.classList.remove("active", "fade-out");
         schauenburgTransition.setAttribute("aria-hidden", "true");
         schauenburgTransitioning = false;
+        schauenburgAimX = 0.50;
+        schauenburgAimY = 0.50;
+        updateSchauenburgAim();
+        schauenburgScreen.classList.add("aiming");
+        requestSchauenburgAimFrame();
       }, 2960);
+    }
+
+
+    function updateSchauenburgAim() {
+      if (!schauenburgAim) return;
+      schauenburgAim.style.left = `${schauenburgAimX * 100}%`;
+      schauenburgAim.style.top = `${schauenburgAimY * 100}%`;
+    }
+
+    function requestSchauenburgAimFrame() {
+      if (schauenburgAimFrame === null) {
+        schauenburgPreviousTime = performance.now();
+        schauenburgAimFrame = requestAnimationFrame(updateSchauenburgAimFrame);
+      }
+    }
+
+    function updateSchauenburgAimFrame(currentTime) {
+      const delta = Math.min(0.04, (currentTime - schauenburgPreviousTime) / 1000);
+      schauenburgPreviousTime = currentTime;
+
+      if (!schauenburgOpen || schauenburgTransitioning) {
+        schauenburgAimFrame = null;
+        return;
+      }
+
+      const speed = 0.44;
+      if (schauenburgKeys.has("KeyA")) schauenburgAimX -= speed * delta;
+      if (schauenburgKeys.has("KeyD")) schauenburgAimX += speed * delta;
+      if (schauenburgKeys.has("KeyW")) schauenburgAimY -= speed * delta;
+      if (schauenburgKeys.has("KeyS")) schauenburgAimY += speed * delta;
+
+      schauenburgAimX = Math.max(0.035, Math.min(0.965, schauenburgAimX));
+      schauenburgAimY = Math.max(0.05, Math.min(0.95, schauenburgAimY));
+      updateSchauenburgAim();
+
+      schauenburgAimFrame = requestAnimationFrame(updateSchauenburgAimFrame);
+    }
+
+    function fireSchauenburgArrow() {
+      if (!schauenburgOpen || schauenburgTransitioning) return;
+
+      if (!isMuted && schauenburgBow) {
+        const shotSound = schauenburgBow.cloneNode();
+        shotSound.volume = 0.62;
+        shotSound.play().catch(() => {});
+      }
+
+      const rect = schauenburgScreen.getBoundingClientRect();
+      const startX = rect.width * 0.16;
+      const startY = rect.height * 0.92;
+      const targetX = rect.width * schauenburgAimX;
+      const targetY = rect.height * schauenburgAimY;
+      const dx = targetX - startX;
+      const dy = targetY - startY;
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+      const arrow = document.createElement("div");
+      arrow.className = "schauenburg-arrow";
+      arrow.innerHTML = '<span class="schauenburg-arrow-tail"></span>';
+      arrow.style.left = `${startX}px`;
+      arrow.style.top = `${startY}px`;
+      arrow.style.transform = `translate3d(0,0,0) rotate(${angle}deg)`;
+      schauenburgScreen.appendChild(arrow);
+
+      const animation = arrow.animate(
+        [
+          { transform: `translate3d(0,0,0) rotate(${angle}deg)`, opacity: 1 },
+          { transform: `translate3d(${dx}px,${dy}px,0) rotate(${angle}deg)`, opacity: 1, offset: 0.82 },
+          { transform: `translate3d(${dx}px,${dy}px,0) rotate(${angle}deg)`, opacity: 0 }
+        ],
+        {
+          duration: 500,
+          easing: "cubic-bezier(.18,.72,.24,1)",
+          fill: "forwards"
+        }
+      );
+
+      animation.addEventListener("finish", () => arrow.remove(), { once: true });
+      window.setTimeout(() => arrow.remove(), 700);
+    }
+
+    function closeSchauenburgScreen() {
+      if (!schauenburgOpen || schauenburgTransitioning) return;
+
+      schauenburgTransitioning = true;
+      schauenburgKeys.clear();
+      schauenburgScreen.classList.remove("aiming");
+
+      selectionOpen = true;
+      selectionScreen.classList.add("active");
+      selectionScreen.setAttribute("aria-hidden", "false");
+
+      schauenburgScreen.classList.remove("active");
+      schauenburgScreen.setAttribute("aria-hidden", "true");
+
+      window.setTimeout(() => {
+        schauenburgOpen = false;
+        schauenburgTransitioning = false;
+      }, 640);
     }
 
     function openWarenzugScreen() {
@@ -1869,6 +2166,51 @@
     titleHotspotThree.addEventListener("click", event => {
       event.preventDefault();
       openSchauenburgScreen();
+    });
+
+
+    schauenburgBackFlag.addEventListener("mouseenter", () => {
+      if (!schauenburgOpen || schauenburgTransitioning || !schauenburgChickenReady) return;
+      schauenburgChickenReady = false;
+      if (!isMuted && schauenburgChicken) {
+        schauenburgChicken.pause();
+        schauenburgChicken.currentTime = 0;
+        schauenburgChicken.volume = 0.52;
+        schauenburgChicken.play().catch(() => {});
+      }
+    });
+
+    schauenburgBackFlag.addEventListener("mouseleave", () => {
+      schauenburgChickenReady = true;
+    });
+
+    schauenburgBackFlag.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeSchauenburgScreen();
+    });
+
+    window.addEventListener("keydown", event => {
+      if (!schauenburgOpen || schauenburgTransitioning) return;
+
+      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space"].includes(event.code)) {
+        event.preventDefault();
+      }
+
+      if (["KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) {
+        schauenburgKeys.add(event.code);
+        requestSchauenburgAimFrame();
+      }
+
+      if (event.code === "Space" && !event.repeat) {
+        fireSchauenburgArrow();
+      }
+    });
+
+    window.addEventListener("keyup", event => {
+      if (["KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) {
+        schauenburgKeys.delete(event.code);
+      }
     });
 
     document.addEventListener("keydown", event => {
