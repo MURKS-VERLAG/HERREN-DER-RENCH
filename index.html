@@ -1734,6 +1734,11 @@
     <audio id="friedrichBockTargetSoundTwo" src="friedrich-bock-ziel-2.mp3" preload="auto"></audio>
     <audio id="friedrichBockHammerSound" src="friedrich-bock-hammer.mp3" preload="auto"></audio>
     <audio id="friedrichBockPainSound" src="friedrich-bock-fehler.mp3" preload="auto"></audio>
+    <audio id="schauenburgHumanHitOne" src="arrowhit4-22k.mp3" preload="auto"></audio>
+    <audio id="schauenburgHumanHitTwo" src="arrwdth_05.mp3" preload="auto"></audio>
+    <audio id="schauenburgHumanHitThree" src="arrwdth_01.mp3" preload="auto"></audio>
+    <audio id="schauenburgHumanHitFour" src="arrwdth_04.mp3" preload="auto"></audio>
+    <audio id="schauenburgHumanHitFive" src="arrwdth_03.mp3" preload="auto"></audio>
   </section>
 
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
@@ -1812,6 +1817,13 @@
     const friedrichBockTargetSoundTwo = document.getElementById("friedrichBockTargetSoundTwo");
     const friedrichBockHammerSound = document.getElementById("friedrichBockHammerSound");
     const friedrichBockPainSound = document.getElementById("friedrichBockPainSound");
+    const schauenburgHumanHitSounds = [
+      document.getElementById("schauenburgHumanHitOne"),
+      document.getElementById("schauenburgHumanHitTwo"),
+      document.getElementById("schauenburgHumanHitThree"),
+      document.getElementById("schauenburgHumanHitFour"),
+      document.getElementById("schauenburgHumanHitFive")
+    ];
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -3465,6 +3477,23 @@
       window.setTimeout(() => dust.remove(), 1150);
     }
 
+
+    function playRandomSchauenburgHumanHitSound() {
+      if (isMuted) return;
+
+      const availableSounds = schauenburgHumanHitSounds.filter(Boolean);
+      if (availableSounds.length === 0) return;
+
+      const source =
+        availableSounds[Math.floor(Math.random() * availableSounds.length)];
+
+      const sound = source.cloneNode();
+      sound.volume = 0.88;
+      sound.play().catch(error => {
+        console.error("Treffersound konnte nicht abgespielt werden:", error);
+      });
+    }
+
     function hitSchauenburgEnemy(enemy) {
       if (
         !enemy ||
@@ -3476,6 +3505,12 @@
         hitSchauenburgRammbock(enemy);
         return;
       }
+
+      if (enemy.kind !== "ritter" && enemy.kind !== "archer") {
+        return;
+      }
+
+      playRandomSchauenburgHumanHitSound();
 
       enemy.state = "dead";
       enemy.cancelled = true;
