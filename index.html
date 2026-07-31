@@ -1149,6 +1149,23 @@
       opacity: 1;
     }
 
+    /* Friedrich-Bock-Schreiber: nur im Belagerungsmodus unten rechts. */
+    #friedrichSchreiber {
+      position: absolute;
+      z-index: 10;
+      right: 0;
+      bottom: 0;
+      width: clamp(190px, 25vw, 390px);
+      max-height: 72vh;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      object-position: right bottom;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(-4px -2px 5px rgba(0,0,0,.38));
+    }
+
     #schauenburgHealthImage {
       position: relative;
       z-index: 2;
@@ -1340,6 +1357,7 @@
 
   <section id="schauenburgScreen" aria-label="Belagerung der Schauenburg 1432" aria-hidden="true">
     <img id="schauenburgOverview" src="schauenburg-belagerung.png" alt="Belagerung der Schauenburg 1432">
+    <img id="friedrichSchreiber" src="friedrich-schreiber.png" alt="" aria-hidden="true">
 
     <div id="schauenburgHealth" aria-label="Lebensleiste der Schauenburg">
       <div id="schauenburgHealthLoss"></div>
