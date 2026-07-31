@@ -1131,6 +1131,36 @@
     }
 
 
+
+    /* Friedrich-Bock-Event – Phase 1: Reiter, feste Route und Schreiberwechsel. */
+    #friedrichBockEventRider {
+      position: absolute;
+      z-index: 9;
+      left: 82.5%;
+      top: 106%;
+      width: clamp(120px, 14vw, 225px);
+      height: auto;
+      display: none;
+      transform: translate3d(-50%, -100%, 0) scale(.78);
+      transform-origin: 50% 100%;
+      pointer-events: none;
+      user-select: none;
+      will-change: left, top, transform;
+      filter: drop-shadow(0 7px 6px rgba(0,0,0,.58));
+    }
+
+    #friedrichBockEventRider.visible {
+      display: block;
+    }
+
+    #friedrichSchreiber {
+      transition: opacity 170ms ease;
+    }
+
+    #friedrichSchreiber.friedrich-event-switching {
+      opacity: 0;
+    }
+
     /* BELAGERUNG V1: ausschließlich innerhalb von #schauenburgScreen. */
     #schauenburgHealth {
       position: absolute;
@@ -1619,6 +1649,7 @@
   <section id="schauenburgScreen" aria-label="Belagerung der Schauenburg 1432" aria-hidden="true">
     <img id="schauenburgOverview" src="schauenburg-belagerung.png" alt="Belagerung der Schauenburg 1432">
     <img id="friedrichSchreiber" src="friedrich-schreiber.png" alt="" aria-hidden="true">
+    <img id="friedrichBockEventRider" src="friedrich-bock-event.png" alt="" aria-hidden="true">
 
     <div id="schauenburgHealth" aria-label="Lebensleiste der Schauenburg">
       <div id="schauenburgHealthLoss"></div>
@@ -1642,6 +1673,8 @@
     <audio id="schauenburgPickaxe" src="spitzhacke-stein.wav" preload="auto"></audio>
     <audio id="schauenburgRammbockSound" src="rammbock-rumms.wav" preload="auto"></audio>
     <audio id="schauenburgCannonSound" src="kanonenschlag.wav" preload="auto"></audio>
+    <audio id="friedrichBockArrivalSound" src="friedrich-bock-erscheint.mp3" preload="auto"></audio>
+    <audio id="friedrichBockTargetSound" src="friedrich-bock-ziel.wav" preload="auto"></audio>
   </section>
 
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
@@ -1710,6 +1743,10 @@
     const schauenburgPickaxe = document.getElementById("schauenburgPickaxe");
     const schauenburgRammbockSound = document.getElementById("schauenburgRammbockSound");
     const schauenburgCannonSound = document.getElementById("schauenburgCannonSound");
+    const friedrichSchreiber = document.getElementById("friedrichSchreiber");
+    const friedrichBockEventRider = document.getElementById("friedrichBockEventRider");
+    const friedrichBockArrivalSound = document.getElementById("friedrichBockArrivalSound");
+    const friedrichBockTargetSound = document.getElementById("friedrichBockTargetSound");
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -1754,6 +1791,10 @@
     let schauenburgArcherSpawnTimers = [];
     let schauenburgArcherWaveTimer = null;
     let schauenburgArcherSequence = 0;
+    let friedrichBockEventTimer = null;
+    let friedrichBockEventAnimation = null;
+    let friedrichBockEventEndTimer = null;
+    let friedrichBockEventActive = false;
     const schauenburgEnemies = new Map();
     let gameFrameRequest = null;
     let gamePreviousTime = performance.now();
@@ -2332,6 +2373,7 @@
         window.clearTimeout(schauenburgArcherWaveTimer);
         schauenburgArcherWaveTimer = null;
       }
+      clearFriedrichBockEvent();
 
       schauenburgEnemies.forEach(enemy => {
         enemy.cancelled = true;
@@ -2358,6 +2400,7 @@
       scheduleNextSchauenburgRammbock();
       scheduleNextSchauenburgCannonShot();
       scheduleSchauenburgArcherMinute();
+      scheduleNextFriedrichBockEvent();
     }
 
     function createRandomMinuteSpawnTimes() {
@@ -2391,6 +2434,190 @@
 
 
 
+
+
+    function scheduleNextFriedrichBockEvent() {
+      if (friedrichBockEventTimer !== null) {
+        window.clearTimeout(friedrichBockEventTimer);
+      }
+
+      friedrichBockEventTimer = window.setTimeout(() => {
+        friedrichBockEventTimer = null;
+
+        if (schauenburgOpen && !schauenburgTransitioning) {
+          startFriedrichBockEvent();
+        } else {
+          scheduleNextFriedrichBockEvent();
+        }
+      }, 120000);
+    }
+
+    function startFriedrichBockEvent() {
+      if (
+        friedrichBockEventActive ||
+        !schauenburgOpen ||
+        schauenburgTransitioning ||
+        !friedrichBockEventRider ||
+        !friedrichSchreiber
+      ) return;
+
+      friedrichBockEventActive = true;
+
+      /* Schreiber während des gesamten Ereignisses exakt auf Anhang 4 wechseln. */
+      friedrichSchreiber.classList.add("friedrich-event-switching");
+      window.setTimeout(() => {
+        if (!friedrichBockEventActive) return;
+        friedrichSchreiber.src = "friedrich-schreiber-alarm.png";
+        friedrichSchreiber.classList.remove("friedrich-event-switching");
+      }, 170);
+
+      /* Anhang 1: genau einmal beim Erscheinen. */
+      if (!isMuted && friedrichBockArrivalSound) {
+        friedrichBockArrivalSound.pause();
+        friedrichBockArrivalSound.currentTime = 0;
+        friedrichBockArrivalSound.volume = 0.92;
+        friedrichBockArrivalSound.play().catch(() => {});
+      }
+
+      friedrichBockEventRider.classList.add("visible");
+      friedrichBockEventRider.style.left = "82.5%";
+      friedrichBockEventRider.style.top = "106%";
+      friedrichBockEventRider.style.transform =
+        "translate3d(-50%,-100%,0) scale(.78)";
+
+      /*
+        Feste Route entsprechend der grünen Referenz:
+        unten rechts -> links/aufwärts über den Hang -> Ziel am markierten Turm/Tor.
+        Keine Zufallsabweichung.
+      */
+      friedrichBockEventAnimation = friedrichBockEventRider.animate(
+        [
+          {
+            offset: 0,
+            left: "82.5%",
+            top: "106%",
+            transform: "translate3d(-50%,-100%,0) scale(.78)"
+          },
+          {
+            offset: 0.20,
+            left: "77.0%",
+            top: "88.5%",
+            transform: "translate3d(-50%,-100%,0) scale(.83)"
+          },
+          {
+            offset: 0.42,
+            left: "69.0%",
+            top: "74.0%",
+            transform: "translate3d(-50%,-100%,0) scale(.88)"
+          },
+          {
+            offset: 0.63,
+            left: "60.0%",
+            top: "67.0%",
+            transform: "translate3d(-50%,-100%,0) scale(.92)"
+          },
+          {
+            offset: 0.82,
+            left: "48.0%",
+            top: "61.5%",
+            transform: "translate3d(-50%,-100%,0) scale(.96)"
+          },
+          {
+            offset: 1,
+            left: "31.0%",
+            top: "49.5%",
+            transform: "translate3d(-50%,-100%,0) scale(1)"
+          }
+        ],
+        {
+          duration: 12500,
+          easing: "linear",
+          fill: "forwards"
+        }
+      );
+
+      friedrichBockEventAnimation.addEventListener("finish", () => {
+        if (!friedrichBockEventActive) return;
+
+        friedrichBockEventAnimation = null;
+        friedrichBockEventRider.style.left = "31.0%";
+        friedrichBockEventRider.style.top = "49.5%";
+        friedrichBockEventRider.style.transform =
+          "translate3d(-50%,-100%,0) scale(1)";
+
+        /* Anhang 2: genau einmal beim tatsächlichen Erreichen des Ziels. */
+        if (!isMuted && friedrichBockTargetSound) {
+          friedrichBockTargetSound.pause();
+          friedrichBockTargetSound.currentTime = 0;
+          friedrichBockTargetSound.volume = 1.0;
+          friedrichBockTargetSound.play().catch(() => {});
+        }
+
+        /* Am Ziel exakt fünf Sekunden stehen bleiben. */
+        friedrichBockEventEndTimer = window.setTimeout(() => {
+          friedrichBockEventEndTimer = null;
+          finishFriedrichBockEvent();
+        }, 5000);
+      }, { once: true });
+    }
+
+    function finishFriedrichBockEvent() {
+      if (!friedrichBockEventActive) return;
+
+      friedrichBockEventActive = false;
+
+      if (friedrichBockEventAnimation) {
+        friedrichBockEventAnimation.cancel();
+        friedrichBockEventAnimation = null;
+      }
+
+      friedrichBockEventRider.classList.remove("visible");
+      friedrichBockEventRider.removeAttribute("style");
+
+      /* Nach dem Ereignis wieder den bisherigen normalen Schreiber herstellen. */
+      friedrichSchreiber.classList.add("friedrich-event-switching");
+      window.setTimeout(() => {
+        friedrichSchreiber.src = "friedrich-schreiber.png";
+        friedrichSchreiber.classList.remove("friedrich-event-switching");
+      }, 170);
+
+      scheduleNextFriedrichBockEvent();
+    }
+
+    function clearFriedrichBockEvent() {
+      if (friedrichBockEventTimer !== null) {
+        window.clearTimeout(friedrichBockEventTimer);
+        friedrichBockEventTimer = null;
+      }
+
+      if (friedrichBockEventEndTimer !== null) {
+        window.clearTimeout(friedrichBockEventEndTimer);
+        friedrichBockEventEndTimer = null;
+      }
+
+      if (friedrichBockEventAnimation) {
+        friedrichBockEventAnimation.cancel();
+        friedrichBockEventAnimation = null;
+      }
+
+      friedrichBockEventActive = false;
+
+      if (friedrichBockEventRider) {
+        friedrichBockEventRider.classList.remove("visible");
+        friedrichBockEventRider.removeAttribute("style");
+      }
+
+      if (friedrichSchreiber) {
+        friedrichSchreiber.src = "friedrich-schreiber.png";
+        friedrichSchreiber.classList.remove("friedrich-event-switching");
+      }
+
+      for (const sound of [friedrichBockArrivalSound, friedrichBockTargetSound]) {
+        if (!sound) continue;
+        sound.pause();
+        sound.currentTime = 0;
+      }
+    }
 
     function createRandomArcherMinuteSpawnTimes() {
       /*
