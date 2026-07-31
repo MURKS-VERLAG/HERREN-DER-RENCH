@@ -1304,6 +1304,165 @@
       filter: drop-shadow(0 4px 4px rgba(0,0,0,.68));
     }
 
+
+    /* Ehre und einmalig kaufbarer Armbrustschütze – nur Belagerungsmodus. */
+    #schauenburgHonorCounter {
+      position: absolute;
+      z-index: 14;
+      top: 10.2%;
+      right: 1.05%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: clamp(4px, .45vw, 8px);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+
+    #schauenburgScreen.active #schauenburgHonorCounter { opacity: 1; }
+
+    #schauenburgHonorValue {
+      color: rgba(241,224,166,.98);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(24px, 2.8vw, 48px);
+      font-weight: 800;
+      line-height: 1;
+      text-shadow: 0 2px 1px rgba(0,0,0,.98), 0 0 6px rgba(0,0,0,.94);
+    }
+
+    #schauenburgHonorIcon {
+      width: clamp(44px, 5.4vw, 86px);
+      height: auto;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,.72));
+    }
+
+    #schauenburgCrossbowShop {
+      position: absolute;
+      z-index: 14;
+      top: 18.8%;
+      right: .7%;
+      width: clamp(160px, 17vw, 285px);
+      min-height: clamp(115px, 15vw, 235px);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: clamp(4px, .45vw, 8px);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+
+    #schauenburgScreen.active #schauenburgCrossbowShop { opacity: 1; }
+
+    #schauenburgCrossbowKey {
+      width: clamp(27px, 2.6vw, 42px);
+      height: clamp(27px, 2.6vw, 42px);
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 2px solid rgba(225,220,205,.92);
+      outline: 2px solid rgba(20,20,18,.96);
+      background: rgba(12,12,11,.86);
+      color: #f3efe2;
+      font: 800 clamp(18px, 2vw, 31px)/1 Georgia, serif;
+      box-shadow: 0 3px 8px rgba(0,0,0,.72);
+    }
+
+    #schauenburgCrossbowCosts {
+      display: grid;
+      gap: 3px;
+      flex: 0 0 auto;
+      color: #f3efe2;
+      font: 800 clamp(15px, 1.55vw, 25px)/1 Georgia, serif;
+      text-shadow: 0 2px 2px #000, 0 0 5px #000;
+    }
+
+    .schauenburg-crossbow-cost {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .schauenburg-gold-coin {
+      width: clamp(17px, 1.7vw, 28px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 30%, #fff0a8 0 11%, #d5a52d 35%, #7c5115 76%, #2e1b07 100%);
+      border: 1px solid #211505;
+      box-shadow: inset 0 0 0 2px rgba(255,225,112,.28), 0 2px 3px rgba(0,0,0,.75);
+    }
+
+    .schauenburg-cost-laurel {
+      width: clamp(19px, 1.9vw, 31px);
+      height: auto;
+      display: block;
+    }
+
+    #schauenburgCrossbowUnitWrap {
+      position: relative;
+      width: clamp(74px, 8.3vw, 134px);
+      height: clamp(105px, 13vw, 205px);
+      flex: 0 0 auto;
+    }
+
+    #schauenburgCrossbowUnit {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      object-position: right bottom;
+      filter: drop-shadow(-3px 4px 4px rgba(0,0,0,.72));
+    }
+
+    #schauenburgCrossbowPurchasedX {
+      position: absolute;
+      inset: 7% 0 2% 7%;
+      display: none;
+      z-index: 2;
+    }
+
+    #schauenburgCrossbowPurchasedX::before,
+    #schauenburgCrossbowPurchasedX::after {
+      content: "";
+      position: absolute;
+      left: 48%;
+      top: -2%;
+      width: clamp(7px, .7vw, 12px);
+      height: 104%;
+      border-radius: 99px;
+      background: #9e1119;
+      box-shadow: 0 0 0 2px rgba(28,0,0,.75), 0 0 7px rgba(0,0,0,.85);
+      transform-origin: center;
+    }
+
+    #schauenburgCrossbowPurchasedX::before { transform: rotate(42deg); }
+    #schauenburgCrossbowPurchasedX::after  { transform: rotate(-42deg); }
+    #schauenburgCrossbowShop.purchased #schauenburgCrossbowPurchasedX { display: block; }
+    #schauenburgCrossbowShop.purchased #schauenburgCrossbowKey,
+    #schauenburgCrossbowShop.purchased #schauenburgCrossbowCosts { opacity: .38; }
+
+    .schauenburg-crossbow-bolt {
+      position: absolute;
+      z-index: 13;
+      width: 58px;
+      height: 3px;
+      transform-origin: 0 50%;
+      pointer-events: none;
+      background: linear-gradient(90deg, #6d451f 0 78%, #eee4c7 79% 100%);
+      box-shadow: 0 0 2px #000;
+      will-change: transform, opacity;
+    }
     #schauenburgGameOverLayer {
       position: fixed;
       inset: 0;
@@ -1788,6 +1947,23 @@
       <img id="schauenburgKillIcon" src="schauenburg-killcount.png" alt="">
     </div>
 
+    <div id="schauenburgHonorCounter" aria-label="Ehre">
+      <span id="schauenburgHonorValue">0</span>
+      <img id="schauenburgHonorIcon" src="schauenburg-ehre-lorbeer.png" alt="">
+    </div>
+
+    <div id="schauenburgCrossbowShop" aria-label="Armbrustschütze kaufen: 40 Gold und 50 Ehre">
+      <span id="schauenburgCrossbowKey">1</span>
+      <span id="schauenburgCrossbowCosts">
+        <span class="schauenburg-crossbow-cost"><span class="schauenburg-gold-coin"></span><span>40</span></span>
+        <span class="schauenburg-crossbow-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-lorbeer.png" alt=""><span>50</span></span>
+      </span>
+      <span id="schauenburgCrossbowUnitWrap">
+        <img id="schauenburgCrossbowUnit" src="schauenburg-armbrust-idle.png" alt="">
+        <span id="schauenburgCrossbowPurchasedX"></span>
+      </span>
+    </div>
+
     <div id="schauenburgEnemyLayer" aria-hidden="true"></div>
     <div id="schauenburgEffectLayer" aria-hidden="true"></div>
 
@@ -1883,6 +2059,9 @@
     const schauenburgBow = document.getElementById("schauenburgBow");
     const schauenburgHealthLoss = document.getElementById("schauenburgHealthLoss");
     const schauenburgKillValue = document.getElementById("schauenburgKillValue");
+    const schauenburgHonorValue = document.getElementById("schauenburgHonorValue");
+    const schauenburgCrossbowShop = document.getElementById("schauenburgCrossbowShop");
+    const schauenburgCrossbowUnit = document.getElementById("schauenburgCrossbowUnit");
     const schauenburgGameOverLayer = document.getElementById("schauenburgGameOverLayer");
     const schauenburgEnemyLayer = document.getElementById("schauenburgEnemyLayer");
     const schauenburgEffectLayer = document.getElementById("schauenburgEffectLayer");
@@ -1940,6 +2119,12 @@
     let schauenburgChickenReady = true;
     let schauenburgHealth = 100;
     let schauenburgKillCount = 0;
+    let schauenburgHonor = 0;
+    let schauenburgGold = 420;
+    let schauenburgCrossbowPurchased = false;
+    let schauenburgCrossbowState = "idle";
+    let schauenburgCrossbowTimer = null;
+    let schauenburgCrossbowWatchTimer = null;
     let schauenburgGameOverActive = false;
     let schauenburgGameOverTimer = null;
     let schauenburgEnemySequence = 0;
@@ -2523,6 +2708,166 @@
       }
     }
 
+
+    function updateSchauenburgHonor() {
+      if (schauenburgHonorValue) {
+        schauenburgHonorValue.textContent = String(schauenburgHonor);
+      }
+    }
+
+    function addSchauenburgHonor(amount) {
+      if (schauenburgGameOverActive) return;
+      schauenburgHonor = Math.max(0, schauenburgHonor + amount);
+      updateSchauenburgHonor();
+    }
+
+    function getSchauenburgHonorForEnemy(enemy) {
+      if (!enemy) return 0;
+      if (enemy.kind === "ritter") return enemy.type === 2 ? 2 : 1;
+      if (enemy.kind === "archer") return 1;
+      if (enemy.kind === "rammbock") return 5;
+      return 0;
+    }
+
+    function resetSchauenburgCrossbowDefender() {
+      if (schauenburgCrossbowTimer !== null) {
+        window.clearTimeout(schauenburgCrossbowTimer);
+        schauenburgCrossbowTimer = null;
+      }
+      if (schauenburgCrossbowWatchTimer !== null) {
+        window.clearTimeout(schauenburgCrossbowWatchTimer);
+        schauenburgCrossbowWatchTimer = null;
+      }
+      schauenburgCrossbowPurchased = false;
+      schauenburgCrossbowState = "idle";
+      if (schauenburgCrossbowShop) schauenburgCrossbowShop.classList.remove("purchased");
+      if (schauenburgCrossbowUnit) schauenburgCrossbowUnit.src = "schauenburg-armbrust-idle.png";
+    }
+
+    function getSchauenburgCrossbowTarget() {
+      if (!schauenburgOpen || schauenburgGameOverActive) return null;
+      const screenRect = schauenburgScreen.getBoundingClientRect();
+      const candidates = [];
+
+      for (const enemy of schauenburgEnemies.values()) {
+        if (!enemy || !enemy.element || (enemy.state !== "running" && enemy.state !== "shooting")) continue;
+        const rect = enemy.element.getBoundingClientRect();
+        const nx = (rect.left - screenRect.left + rect.width * .5) / screenRect.width;
+        const ny = (rect.top - screenRect.top + rect.height * .55) / screenRect.height;
+
+        /* Reichweite endet vor dem Kartenrand, erreicht aber die Schusspositionen der Bogenschützen. */
+        if (nx < .42 || nx > .94 || ny < .34 || ny > .84) continue;
+        candidates.push({ enemy, ny, priority: enemy.kind === "archer" ? 0 : enemy.kind === "ritter" ? 1 : 2 });
+      }
+
+      candidates.sort((a, b) => a.priority - b.priority || a.ny - b.ny);
+      return candidates.length ? candidates[0].enemy : null;
+    }
+
+    function createSchauenburgCrossbowBolt(target, willHit) {
+      if (!target || !target.element || !schauenburgCrossbowUnit) return;
+      const screenRect = schauenburgScreen.getBoundingClientRect();
+      const unitRect = schauenburgCrossbowUnit.getBoundingClientRect();
+      const targetRect = target.element.getBoundingClientRect();
+      const startX = unitRect.left - screenRect.left + unitRect.width * .28;
+      const startY = unitRect.top - screenRect.top + unitRect.height * .42;
+      const targetX = targetRect.left - screenRect.left + targetRect.width * .5;
+      const targetY = targetRect.top - screenRect.top + targetRect.height * .45;
+      const dx = targetX - startX;
+      const dy = targetY - startY;
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+      const bolt = document.createElement("span");
+      bolt.className = "schauenburg-crossbow-bolt";
+      bolt.style.left = `${startX}px`;
+      bolt.style.top = `${startY}px`;
+      bolt.style.transform = `translate3d(0,0,0) rotate(${angle}deg)`;
+      schauenburgScreen.appendChild(bolt);
+
+      const animation = bolt.animate([
+        { transform: `translate3d(0,0,0) rotate(${angle}deg)`, opacity: 1 },
+        { transform: `translate3d(${dx}px,${dy}px,0) rotate(${angle}deg)`, opacity: 1 }
+      ], { duration: 280, easing: "linear", fill: "forwards" });
+
+      animation.addEventListener("finish", () => {
+        bolt.remove();
+        if (
+          willHit &&
+          target &&
+          target.element &&
+          (target.state === "running" || target.state === "shooting")
+        ) {
+          hitSchauenburgEnemy(target);
+        }
+      }, { once: true });
+    }
+
+    function scheduleSchauenburgCrossbowWatch(delay = 120) {
+      if (!schauenburgCrossbowPurchased || schauenburgGameOverActive || !schauenburgOpen) return;
+      if (schauenburgCrossbowWatchTimer !== null) window.clearTimeout(schauenburgCrossbowWatchTimer);
+      schauenburgCrossbowWatchTimer = window.setTimeout(() => {
+        schauenburgCrossbowWatchTimer = null;
+        const target = getSchauenburgCrossbowTarget();
+        if (target) fireSchauenburgCrossbowDefender(target);
+        else {
+          schauenburgCrossbowState = "idle";
+          schauenburgCrossbowUnit.src = "schauenburg-armbrust-idle.png";
+          scheduleSchauenburgCrossbowWatch(140);
+        }
+      }, delay);
+    }
+
+    function fireSchauenburgCrossbowDefender(target) {
+      if (!schauenburgCrossbowPurchased || schauenburgCrossbowState !== "idle" || !target) return;
+      schauenburgCrossbowState = "shooting";
+      schauenburgCrossbowUnit.src = "schauenburg-armbrust-schuss.png";
+
+      if (!isMuted && schauenburgBow) {
+        const shot = schauenburgBow.cloneNode();
+        shot.volume = .34;
+        shot.play().catch(() => {});
+      }
+
+      createSchauenburgCrossbowBolt(target, Math.random() < .75);
+
+      /* Schussbild bleibt exakt eine Sekunde sichtbar. */
+      schauenburgCrossbowTimer = window.setTimeout(() => {
+        schauenburgCrossbowTimer = null;
+        if (!schauenburgCrossbowPurchased || schauenburgGameOverActive) return;
+        schauenburgCrossbowState = "reloading";
+        schauenburgCrossbowUnit.src = "schauenburg-armbrust-nachladen.png";
+
+        /* Nachladen dauert exakt zwei Sekunden. */
+        schauenburgCrossbowTimer = window.setTimeout(() => {
+          schauenburgCrossbowTimer = null;
+          if (!schauenburgCrossbowPurchased || schauenburgGameOverActive) return;
+          schauenburgCrossbowState = "idle";
+          schauenburgCrossbowUnit.src = "schauenburg-armbrust-idle.png";
+          scheduleSchauenburgCrossbowWatch(0);
+        }, 2000);
+      }, 1000);
+    }
+
+    function buySchauenburgCrossbowDefender() {
+      if (
+        !schauenburgOpen ||
+        schauenburgTransitioning ||
+        schauenburgGameOverActive ||
+        schauenburgCrossbowPurchased ||
+        schauenburgGold < 40 ||
+        schauenburgHonor < 50
+      ) return;
+
+      schauenburgGold -= 40;
+      schauenburgHonor -= 50;
+      schauenburgCrossbowPurchased = true;
+      schauenburgCrossbowState = "idle";
+      updateSchauenburgHonor();
+      schauenburgCrossbowShop.classList.add("purchased");
+      schauenburgCrossbowUnit.src = "schauenburg-armbrust-idle.png";
+      scheduleSchauenburgCrossbowWatch(0);
+    }
+
     function registerSchauenburgKill(enemy) {
       if (
         schauenburgGameOverActive ||
@@ -2537,7 +2882,9 @@
 
       enemy.killCounted = true;
       schauenburgKillCount += 1;
+      schauenburgHonor += getSchauenburgHonorForEnemy(enemy);
       updateSchauenburgKillCount();
+      updateSchauenburgHonor();
     }
 
     function triggerSchauenburgGameOver() {
@@ -2581,8 +2928,12 @@
             schauenburgGameOverActive = false;
             schauenburgHealth = 100;
             schauenburgKillCount = 0;
+            schauenburgHonor = 0;
+            schauenburgGold = 420;
+            resetSchauenburgCrossbowDefender();
             updateSchauenburgHealth();
             updateSchauenburgKillCount();
+            updateSchauenburgHonor();
 
             if (friedrichSchreiber) {
               friedrichSchreiber.src = "friedrich-schreiber.png";
@@ -2640,6 +2991,14 @@
         schauenburgArcherWaveTimer = null;
       }
       clearFriedrichBockEvent();
+      if (schauenburgCrossbowTimer !== null) {
+        window.clearTimeout(schauenburgCrossbowTimer);
+        schauenburgCrossbowTimer = null;
+      }
+      if (schauenburgCrossbowWatchTimer !== null) {
+        window.clearTimeout(schauenburgCrossbowWatchTimer);
+        schauenburgCrossbowWatchTimer = null;
+      }
 
       schauenburgEnemies.forEach(enemy => {
         enemy.cancelled = true;
@@ -2667,6 +3026,9 @@
       schauenburgGameOverActive = false;
       schauenburgHealth = 100;
       schauenburgKillCount = 0;
+      schauenburgHonor = 0;
+      schauenburgGold = 420;
+      resetSchauenburgCrossbowDefender();
       schauenburgEnemySequence = 0;
       schauenburgArcherSequence = 0;
 
@@ -2674,6 +3036,7 @@
       schauenburgGameOverLayer.setAttribute("aria-hidden", "true");
 
       updateSchauenburgKillCount();
+      updateSchauenburgHonor();
       updateSchauenburgHealth();
       scheduleSchauenburgMinute();
       scheduleNextSchauenburgRammbock();
@@ -2917,6 +3280,7 @@
       if (!friedrichBockEventActive || !friedrichBockMinigameActive) return;
 
       stopFriedrichBockMinigame();
+      addSchauenburgHonor(20);
 
       /*
         BOCK wurde korrekt eingegeben:
@@ -4234,8 +4598,13 @@
     window.addEventListener("keydown", event => {
       if (!schauenburgOpen || schauenburgTransitioning) return;
 
-      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space"].includes(event.code)) {
+      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space", "Digit1", "Numpad1"].includes(event.code)) {
         event.preventDefault();
+      }
+
+      if ((event.code === "Digit1" || event.code === "Numpad1") && !event.repeat) {
+        buySchauenburgCrossbowDefender();
+        return;
       }
 
       if (["KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) {
