@@ -966,7 +966,7 @@
     }
 
     #schauenburgScreen.aiming {
-      cursor: none;
+      cursor: default;
     }
 
     #schauenburgAim {
@@ -1905,8 +1905,22 @@
       }
 
       const rect = schauenburgScreen.getBoundingClientRect();
-      const startX = rect.width * 0.16;
-      const startY = rect.height * 0.92;
+
+      /*
+        Abschusspunkte liegen ausschließlich oben mittig in der Kernburg
+        und auf den sichtbaren Türmen. Bei jedem Schuss wird einer dieser
+        festen Punkte gewählt.
+      */
+      const towerOrigins = [
+        { x: 0.46, y: 0.18 },
+        { x: 0.52, y: 0.13 },
+        { x: 0.58, y: 0.16 },
+        { x: 0.63, y: 0.20 },
+        { x: 0.69, y: 0.23 }
+      ];
+      const origin = towerOrigins[Math.floor(Math.random() * towerOrigins.length)];
+      const startX = rect.width * origin.x;
+      const startY = rect.height * origin.y;
       const targetX = rect.width * schauenburgAimX;
       const targetY = rect.height * schauenburgAimY;
       const dx = targetX - startX;
