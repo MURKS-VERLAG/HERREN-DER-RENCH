@@ -1257,6 +1257,67 @@
 
     .schauenburg-dust i:first-child { --dx: -42px; --dy: -12px; }
 
+
+    /* Rammbock-Erweiterung: eigenes, langsames Belagerungsziel. */
+    .schauenburg-enemy.rammbock {
+      width: clamp(150px, 17vw, 280px);
+      transform: translate3d(-50%, -100%, 0);
+      z-index: 5;
+      filter: drop-shadow(0 8px 7px rgba(0,0,0,.58));
+    }
+
+    .schauenburg-enemy.rammbock.hit {
+      animation: rammbockHitShake 180ms ease-in-out;
+    }
+
+    .schauenburg-enemy.rammbock.destroyed {
+      width: clamp(165px, 18.5vw, 305px);
+      z-index: 7;
+      animation: none;
+      filter: drop-shadow(0 8px 8px rgba(0,0,0,.62));
+    }
+
+    .schauenburg-enemy.rammbock.at-wall {
+      animation: rammbockWallImpact 520ms ease-in-out;
+    }
+
+    @keyframes rammbockHitShake {
+      0%, 100% { margin-left: 0; }
+      35% { margin-left: -5px; }
+      70% { margin-left: 5px; }
+    }
+
+    @keyframes rammbockWallImpact {
+      0% { margin-top: 0; transform: translate3d(-50%,-100%,0) scale(1); }
+      45% { margin-top: -8px; transform: translate3d(-50%,-100%,0) scale(1.025); }
+      100% { margin-top: 0; transform: translate3d(-50%,-100%,0) scale(1); }
+    }
+
+    .schauenburg-dust.rammbock-dust {
+      width: 190px;
+      height: 120px;
+      transform: translate(-50%, -60%);
+    }
+
+    .schauenburg-dust.rammbock-dust i {
+      width: 13px;
+      height: 13px;
+      animation-duration: 1300ms;
+    }
+
+    .schauenburg-dust.rammbock-dust i:nth-child(1)  { --dx: -82px; --dy: -24px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(2)  { --dx: -67px; --dy: -62px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(3)  { --dx: -43px; --dy: -89px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(4)  { --dx: -15px; --dy: -105px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(5)  { --dx: 19px; --dy: -111px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(6)  { --dx: 48px; --dy: -92px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(7)  { --dx: 74px; --dy: -67px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(8)  { --dx: 91px; --dy: -31px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(9)  { --dx: -94px; --dy: 5px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(10) { --dx: 96px; --dy: 8px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(11) { --dx: -51px; --dy: -40px; }
+    .schauenburg-dust.rammbock-dust i:nth-child(12) { --dx: 58px; --dy: -44px; }
+
     @keyframes schauenburgDustBurst {
       0% {
         opacity: 0;
@@ -1379,6 +1440,7 @@
     <audio id="schauenburgChicken" src="huehner-gackern.wav" preload="auto"></audio>
     <audio id="schauenburgBow" src="pfeil-und-bogen.wav" preload="auto"></audio>
     <audio id="schauenburgPickaxe" src="spitzhacke-stein.wav" preload="auto"></audio>
+    <audio id="schauenburgRammbockSound" src="rammbock-rumms.wav" preload="auto"></audio>
   </section>
 
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
@@ -1445,6 +1507,7 @@
     const schauenburgEnemyLayer = document.getElementById("schauenburgEnemyLayer");
     const schauenburgEffectLayer = document.getElementById("schauenburgEffectLayer");
     const schauenburgPickaxe = document.getElementById("schauenburgPickaxe");
+    const schauenburgRammbockSound = document.getElementById("schauenburgRammbockSound");
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -1482,6 +1545,7 @@
     let schauenburgEnemyId = 0;
     let schauenburgSpawnTimers = [];
     let schauenburgWaveTimer = null;
+    let schauenburgRammbockTimer = null;
     const schauenburgEnemies = new Map();
     let gameFrameRequest = null;
     let gamePreviousTime = performance.now();
@@ -2034,6 +2098,10 @@
         window.clearTimeout(schauenburgWaveTimer);
         schauenburgWaveTimer = null;
       }
+      if (schauenburgRammbockTimer !== null) {
+        window.clearTimeout(schauenburgRammbockTimer);
+        schauenburgRammbockTimer = null;
+      }
 
       schauenburgEnemies.forEach(enemy => {
         enemy.cancelled = true;
@@ -2052,6 +2120,7 @@
       schauenburgEnemySequence = 0;
       updateSchauenburgHealth();
       scheduleSchauenburgMinute();
+      scheduleNextSchauenburgRammbock();
     }
 
     function createRandomMinuteSpawnTimes() {
@@ -2081,6 +2150,151 @@
         schauenburgSpawnTimers = [];
         scheduleSchauenburgMinute();
       }, 60000);
+    }
+
+
+    function scheduleNextSchauenburgRammbock() {
+      if (schauenburgRammbockTimer !== null) {
+        window.clearTimeout(schauenburgRammbockTimer);
+      }
+
+      schauenburgRammbockTimer = window.setTimeout(() => {
+        schauenburgRammbockTimer = null;
+        if (schauenburgOpen && !schauenburgTransitioning) {
+          spawnSchauenburgRammbock();
+          scheduleNextSchauenburgRammbock();
+        }
+      }, 60000);
+    }
+
+    function spawnSchauenburgRammbock() {
+      if (!schauenburgOpen || schauenburgTransitioning || !schauenburgEnemyLayer) return;
+
+      const id = ++schauenburgEnemyId;
+      const element = document.createElement("img");
+      element.className = "schauenburg-enemy rammbock";
+      element.src = "rammbock.png";
+      element.alt = "";
+      element.dataset.enemyId = String(id);
+
+      const routes = [
+        { sx: 0.50, sy: 1.13, tx: 0.58, ty: 0.585 },
+        { sx: 0.63, sy: 1.14, tx: 0.66, ty: 0.555 },
+        { sx: 0.76, sy: 1.13, tx: 0.74, ty: 0.525 }
+      ];
+      const route = routes[Math.floor(Math.random() * routes.length)];
+      const duration = 28000 + Math.random() * 5000;
+
+      element.style.left = `${route.sx * 100}%`;
+      element.style.top = `${route.sy * 100}%`;
+      schauenburgEnemyLayer.appendChild(element);
+
+      const enemy = {
+        id,
+        kind: "rammbock",
+        type: 0,
+        hits: 0,
+        element,
+        state: "running",
+        cancelled: false,
+        animation: null,
+        route
+      };
+      schauenburgEnemies.set(id, enemy);
+
+      enemy.animation = element.animate(
+        [
+          {
+            left: `${route.sx * 100}%`,
+            top: `${route.sy * 100}%`,
+            transform: "translate3d(-50%,-100%,0) scale(.82)"
+          },
+          {
+            left: `${route.tx * 100}%`,
+            top: `${route.ty * 100}%`,
+            transform: "translate3d(-50%,-100%,0) scale(1)"
+          }
+        ],
+        {
+          duration,
+          easing: "linear",
+          fill: "forwards"
+        }
+      );
+
+      enemy.animation.addEventListener("finish", () => {
+        if (!enemy.cancelled && enemy.state === "running") {
+          rammbockReachedSchauenburgWall(enemy);
+        }
+      }, { once: true });
+    }
+
+    function hitSchauenburgRammbock(enemy) {
+      if (!enemy || enemy.kind !== "rammbock" || enemy.state !== "running" || !enemy.element) return;
+
+      enemy.hits += 1;
+
+      enemy.element.classList.remove("hit");
+      void enemy.element.offsetWidth;
+      enemy.element.classList.add("hit");
+
+      if (enemy.hits < 10) return;
+
+      enemy.state = "destroyed";
+      enemy.cancelled = true;
+
+      const screenRect = schauenburgScreen.getBoundingClientRect();
+      const enemyRect = enemy.element.getBoundingClientRect();
+      const centerX = enemyRect.left - screenRect.left + enemyRect.width * 0.5;
+      const bottomY = enemyRect.bottom - screenRect.top;
+
+      if (enemy.animation) enemy.animation.cancel();
+
+      enemy.element.classList.remove("hit", "at-wall");
+      enemy.element.classList.add("destroyed");
+      enemy.element.src = "rammbock-zerstoert.png";
+      enemy.element.style.left = `${centerX}px`;
+      enemy.element.style.top = `${bottomY}px`;
+      enemy.element.style.transform = "translate3d(-50%,-100%,0) scale(1)";
+
+      window.setTimeout(() => removeSchauenburgEnemy(enemy), 5000);
+    }
+
+    function rammbockReachedSchauenburgWall(enemy) {
+      if (!enemy || enemy.kind !== "rammbock" || enemy.state !== "running" || !enemy.element) return;
+
+      enemy.state = "wall";
+      if (enemy.animation) enemy.animation.cancel();
+
+      enemy.element.style.left = `${enemy.route.tx * 100}%`;
+      enemy.element.style.top = `${enemy.route.ty * 100}%`;
+      enemy.element.style.transform = "translate3d(-50%,-100%,0) scale(1)";
+      enemy.element.classList.add("at-wall");
+
+      createSchauenburgRammbockDust(enemy.route.tx, enemy.route.ty);
+
+      if (!isMuted && schauenburgRammbockSound) {
+        const impact = schauenburgRammbockSound.cloneNode();
+        impact.volume = 0.94;
+        impact.play().catch(() => {});
+      }
+
+      schauenburgHealth = Math.max(0, schauenburgHealth - 15);
+      updateSchauenburgHealth();
+
+      window.setTimeout(() => removeSchauenburgEnemy(enemy), 3000);
+    }
+
+    function createSchauenburgRammbockDust(x, y) {
+      if (!schauenburgEffectLayer) return;
+
+      const dust = document.createElement("div");
+      dust.className = "schauenburg-dust rammbock-dust";
+      dust.style.left = `${x * 100}%`;
+      dust.style.top = `${y * 100}%`;
+      dust.innerHTML = "<i></i>".repeat(12);
+      schauenburgEffectLayer.appendChild(dust);
+      window.setTimeout(() => dust.remove(), 1500);
     }
 
     function spawnSchauenburgEnemy() {
@@ -2117,6 +2331,7 @@
 
       const enemy = {
         id,
+        kind: "ritter",
         type,
         element,
         state: "running",
@@ -2192,6 +2407,11 @@
 
     function hitSchauenburgEnemy(enemy) {
       if (!enemy || enemy.state !== "running" || !enemy.element) return;
+
+      if (enemy.kind === "rammbock") {
+        hitSchauenburgRammbock(enemy);
+        return;
+      }
 
       enemy.state = "dead";
       enemy.cancelled = true;
