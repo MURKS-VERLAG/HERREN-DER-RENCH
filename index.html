@@ -384,6 +384,239 @@
     }
 
 
+
+    /* Neuer Hub: Die Herren der Rench. Alle bestehenden Bereiche bleiben unberührt. */
+    #renchHubScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 19;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #050505;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #renchHubScreen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    #renchHubFrame {
+      position: relative;
+      width: min(100vw, calc(100vh * 1196 / 896));
+      height: min(100vh, calc(100vw * 896 / 1196));
+      overflow: hidden;
+      background: #fff;
+      isolation: isolate;
+    }
+
+    #renchHubImage {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      user-select: none;
+      pointer-events: none;
+      image-rendering: auto;
+    }
+
+    .rench-character-hotspot {
+      position: absolute;
+      z-index: 4;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #renchBalianHotspot {
+      left: 6.7%;
+      top: 10.2%;
+      width: 17.8%;
+      height: 35.2%;
+    }
+
+    #renchJoergHotspot {
+      left: 41.8%;
+      top: 2.0%;
+      width: 19.1%;
+      height: 37.6%;
+    }
+
+    #renchReinholdHotspot {
+      left: 76.6%;
+      top: 10.3%;
+      width: 18.0%;
+      height: 35.2%;
+    }
+
+    .rench-sword-marker {
+      position: absolute;
+      z-index: 6;
+      width: clamp(145px, 18%, 270px);
+      height: auto;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(.82);
+      filter:
+        drop-shadow(0 0 4px rgba(255,255,255,.92))
+        drop-shadow(0 0 8px rgba(0,0,0,.35));
+      transition: opacity 170ms ease, transform 190ms ease;
+    }
+
+    .rench-character-hotspot:hover + .rench-sword-marker,
+    .rench-character-hotspot:focus-visible + .rench-sword-marker {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #renchSwordsBalian {
+      left: 15.7%;
+      top: 27.5%;
+    }
+
+    #renchSwordsJoerg {
+      left: 51.3%;
+      top: 20.5%;
+    }
+
+    #renchSwordsReinhold {
+      left: 85.7%;
+      top: 27.5%;
+    }
+
+    #renchBackButton {
+      position: absolute;
+      z-index: 9;
+      left: 1.0%;
+      bottom: 1.2%;
+      width: clamp(25px, 2.6%, 40px);
+      height: clamp(22px, 2.4%, 36px);
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: rgba(255,255,255,.68);
+      color: #111;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(16px, 1.7vw, 26px);
+      font-weight: 700;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      outline: none;
+      opacity: .72;
+      transition: opacity 160ms ease, transform 160ms ease, background 160ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #renchBackButton:hover,
+    #renchBackButton:focus-visible {
+      opacity: 1;
+      transform: translateX(-2px) scale(1.05);
+      background: rgba(255,255,255,.94);
+    }
+
+    /*
+      Organischer Seitenbrand:
+      Nur die bestehende Spielmodus-Auswahl wird beim Eintritt weggebrannt.
+      Der neue Hub liegt bereits unverändert darunter.
+    */
+    #selectionScreen.burning-to-rench {
+      pointer-events: none;
+      animation: selectionBurnAway 2350ms linear forwards;
+    }
+
+    #selectionScreen.burning-to-rench::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 15% 42%, transparent 0 46%, rgba(255,188,63,.94) 48%, rgba(72,21,4,.96) 51%, transparent 55%),
+        radial-gradient(ellipse at 42% 58%, transparent 0 42%, rgba(255,151,36,.88) 45%, rgba(55,15,3,.95) 49%, transparent 54%),
+        radial-gradient(ellipse at 72% 38%, transparent 0 43%, rgba(255,181,51,.90) 46%, rgba(61,17,3,.96) 50%, transparent 55%);
+      mix-blend-mode: multiply;
+      opacity: 0;
+      animation: burnEdgeGlow 2350ms ease-in-out forwards;
+    }
+
+    @keyframes selectionBurnAway {
+      0% {
+        opacity: 1;
+        clip-path: polygon(
+          0 0, 100% 0, 100% 100%, 0 100%,
+          0 100%, 0 0
+        );
+        filter: brightness(1);
+      }
+      18% {
+        clip-path: polygon(
+          10% 0, 100% 0, 100% 100%, 8% 100%,
+          4% 86%, 9% 73%, 3% 61%, 8% 48%,
+          2% 34%, 7% 21%, 3% 8%
+        );
+      }
+      42% {
+        clip-path: polygon(
+          38% 0, 100% 0, 100% 100%, 35% 100%,
+          31% 87%, 39% 76%, 32% 63%, 40% 51%,
+          30% 37%, 38% 24%, 33% 11%
+        );
+        filter: brightness(.92) contrast(1.08);
+      }
+      68% {
+        clip-path: polygon(
+          70% 0, 100% 0, 100% 100%, 68% 100%,
+          62% 88%, 72% 75%, 64% 62%, 73% 49%,
+          63% 35%, 71% 22%, 66% 9%
+        );
+        filter: brightness(.78) contrast(1.22);
+      }
+      90% {
+        clip-path: polygon(
+          94% 0, 100% 0, 100% 100%, 92% 100%,
+          88% 85%, 96% 72%, 89% 58%, 97% 46%,
+          90% 31%, 96% 18%, 92% 7%
+        );
+        opacity: 1;
+      }
+      100% {
+        clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    @keyframes burnEdgeGlow {
+      0%, 5% { opacity: 0; transform: translateX(-58%) scaleX(.34); }
+      18% { opacity: .72; transform: translateX(-38%) scaleX(.48); }
+      48% { opacity: .88; transform: translateX(-3%) scaleX(.58); }
+      76% { opacity: .72; transform: translateX(33%) scaleX(.46); }
+      100% { opacity: 0; transform: translateX(67%) scaleX(.30); }
+    }
+
+    #renchHubScreen.returning-to-selection {
+      pointer-events: none;
+      animation: renchHubClose 520ms ease-in-out forwards;
+    }
+
+    @keyframes renchHubClose {
+      from { opacity: 1; transform: scale(1); }
+      to   { opacity: 0; transform: scale(.992); }
+    }
+
     /* Spielszene: Der Straßburger Warenzug. */
     #warenzugScreen {
       position: absolute;
@@ -612,6 +845,23 @@
     <audio id="selectionMusic" src="musik-auswahlbildschirm.mp3" preload="auto" loop></audio>
   </section>
 
+  <section id="renchHubScreen" aria-label="Die Herren der Rench" aria-hidden="true">
+    <div id="renchHubFrame">
+      <img id="renchHubImage" src="die-herren-der-rench-karte.png" alt="Die Herren der Rench">
+
+      <button id="renchBalianHotspot" class="rench-character-hotspot" type="button" aria-label="Balian ohne Burg"></button>
+      <img id="renchSwordsBalian" class="rench-sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+      <button id="renchJoergHotspot" class="rench-character-hotspot" type="button" aria-label="Jörg der Böse"></button>
+      <img id="renchSwordsJoerg" class="rench-sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+      <button id="renchReinholdHotspot" class="rench-character-hotspot" type="button" aria-label="Reinhold Ringelnatz"></button>
+      <img id="renchSwordsReinhold" class="rench-sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+      <button id="renchBackButton" type="button" aria-label="Zurück zur Spielmodus-Auswahl" title="Zurück">←</button>
+    </div>
+  </section>
+
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
     <div id="warenzugWorld">
       <img id="warenzugBackground" src="warenzug-ebene.png" alt="">
@@ -651,7 +901,11 @@
     const swordClang = document.getElementById("swordClang");
     const gateSound = document.getElementById("gateSound");
     const selectionMusic = document.getElementById("selectionMusic");
+    const titleHotspotOne = document.getElementById("titleHotspotOne");
     const titleHotspotTwo = document.getElementById("titleHotspotTwo");
+    const renchHubScreen = document.getElementById("renchHubScreen");
+    const renchBackButton = document.getElementById("renchBackButton");
+    const renchCharacterHotspots = Array.from(document.querySelectorAll(".rench-character-hotspot"));
     const warenzugScreen = document.getElementById("warenzugScreen");
     const warenzugWorld = document.getElementById("warenzugWorld");
     const joergPlayer = document.getElementById("joergPlayer");
@@ -680,6 +934,8 @@
     let selectionTransitioning = false;
     let openSelectionWhenReady = false;
     let warenzugOpen = false;
+    let renchHubOpen = false;
+    let renchHubTransitioning = false;
     let gameFrameRequest = null;
     let gamePreviousTime = performance.now();
     let playerX = 0.10;
@@ -1106,6 +1362,53 @@
 
 
 
+    function openRenchHubScreen() {
+      if (
+        renchHubOpen ||
+        renchHubTransitioning ||
+        selectionTransitioning ||
+        warenzugOpen
+      ) return;
+
+      renchHubTransitioning = true;
+      renchHubOpen = true;
+
+      renchHubScreen.classList.remove("returning-to-selection");
+      renchHubScreen.classList.add("active");
+      renchHubScreen.setAttribute("aria-hidden", "false");
+
+      selectionScreen.classList.remove("burning-to-rench");
+      void selectionScreen.offsetWidth;
+      selectionScreen.classList.add("burning-to-rench");
+
+      window.setTimeout(() => {
+        selectionOpen = false;
+        selectionScreen.classList.remove("active", "burning-to-rench");
+        selectionScreen.setAttribute("aria-hidden", "true");
+        renchHubTransitioning = false;
+      }, 2380);
+    }
+
+    function closeRenchHubScreen() {
+      if (!renchHubOpen || renchHubTransitioning) return;
+
+      renchHubTransitioning = true;
+
+      selectionOpen = true;
+      selectionScreen.classList.remove("burning-to-rench");
+      selectionScreen.classList.add("active");
+      selectionScreen.setAttribute("aria-hidden", "false");
+
+      renchHubScreen.classList.add("returning-to-selection");
+
+      window.setTimeout(() => {
+        renchHubOpen = false;
+        renchHubScreen.classList.remove("active", "returning-to-selection");
+        renchHubScreen.setAttribute("aria-hidden", "true");
+        renchHubTransitioning = false;
+      }, 540);
+    }
+
     function openWarenzugScreen() {
       if (warenzugOpen || selectionTransitioning) return;
 
@@ -1301,6 +1604,11 @@
       }, 320);
     }
 
+    titleHotspotOne.addEventListener("click", event => {
+      event.preventDefault();
+      openRenchHubScreen();
+    });
+
     titleHotspotTwo.addEventListener("click", event => {
       event.preventDefault();
       openWarenzugScreen();
@@ -1402,6 +1710,16 @@
       hotspot.addEventListener("pointerenter", () => playEffect(swordClang));
       hotspot.addEventListener("focus", () => playEffect(swordClang));
     }
+
+    for (const hotspot of renchCharacterHotspots) {
+      hotspot.addEventListener("pointerenter", () => playEffect(swordClang));
+      hotspot.addEventListener("focus", () => playEffect(swordClang));
+    }
+
+    renchBackButton.addEventListener("click", event => {
+      event.preventDefault();
+      closeRenchHubScreen();
+    });
 
     returnHotspot.addEventListener("pointerenter", () => playEffect(gateSound));
     returnHotspot.addEventListener("focus", () => playEffect(gateSound));
