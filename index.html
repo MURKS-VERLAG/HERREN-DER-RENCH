@@ -1263,7 +1263,7 @@
       right: 8.6%;
       top: 42.8%;
       width: 0%;
-      height: 13.4%;
+      height: 7.2%;
       background: #050505;
       border-radius: 0 999px 999px 0;
       transition: width 650ms ease;
@@ -2601,15 +2601,45 @@
 
       if (!expectedStep) return false;
 
-      const isRelevantInput =
-        event.code.startsWith("Key") ||
-        event.code === "ArrowLeft" ||
-        event.code === "ArrowUp" ||
-        event.code === "ArrowRight" ||
-        event.code === "ArrowDown";
+      /*
+        Diese Tasten bleiben für die normale Belagerungssteuerung vollständig frei:
+        W/A/S/D, Leertaste und die Ziffern 1 bis 9.
+        Sie beeinflussen das Minispiel in keiner Weise.
+      */
+      const ignoredMinigameCodes = new Set([
+        "KeyW",
+        "KeyA",
+        "KeyS",
+        "KeyD",
+        "Space",
+        "Digit1",
+        "Digit2",
+        "Digit3",
+        "Digit4",
+        "Digit5",
+        "Digit6",
+        "Digit7",
+        "Digit8",
+        "Digit9",
+        "Numpad1",
+        "Numpad2",
+        "Numpad3",
+        "Numpad4",
+        "Numpad5",
+        "Numpad6",
+        "Numpad7",
+        "Numpad8",
+        "Numpad9"
+      ]);
 
-      if (!isRelevantInput) return false;
+      if (ignoredMinigameCodes.has(event.code)) {
+        return false;
+      }
 
+      /*
+        Jede andere Taste wird vom Minispiel ausgewertet:
+        richtige Taste = Fortschritt, sämtliche übrigen Tasten = Misserfolg.
+      */
       event.preventDefault();
       event.stopImmediatePropagation();
 
@@ -3388,13 +3418,29 @@
     function spawnFriedrichBockReinforcementWave() {
       if (!schauenburgOpen || schauenburgTransitioning) return;
 
+      /*
+        Exakt 20 Ritter erscheinen im selben Moment, aber breit über die
+        vollständige Angriffsfront verteilt. Kleine Abweichungen verhindern
+        starre Reihen, ohne dass die Einheiten wieder auf einem Punkt spawnen.
+      */
       for (let index = 0; index < 20; index += 1) {
         const forcedType = Math.random() < 0.5 ? 1 : 2;
-        spawnSchauenburgEnemy(forcedType);
+        const spread = index / 19;
+        const startX = 0.47 + spread * 0.48;
+        const targetX = 0.55 + spread * 0.31;
+
+        const forcedRoute = {
+          sx: Math.max(0.46, Math.min(0.96, startX + (Math.random() - 0.5) * 0.014)),
+          sy: 1.035 + (index % 4) * 0.012,
+          tx: Math.max(0.54, Math.min(0.87, targetX + (Math.random() - 0.5) * 0.012)),
+          ty: 0.575 - spread * 0.105
+        };
+
+        spawnSchauenburgEnemy(forcedType, forcedRoute);
       }
     }
 
-    function spawnSchauenburgEnemy(forcedType = null) {
+    function spawnSchauenburgEnemy(forcedType = null, forcedRoute = null) {
       if (!schauenburgOpen || schauenburgTransitioning || !schauenburgEnemyLayer) return;
 
       const type =
@@ -3422,7 +3468,7 @@
         { sx: 0.82, sy: 1.06, tx: 0.77, ty: 0.505 },
         { sx: 0.91, sy: 1.04, tx: 0.84, ty: 0.485 }
       ];
-      const route = routes[Math.floor(Math.random() * routes.length)];
+      const route = forcedRoute || routes[Math.floor(Math.random() * routes.length)];
       const duration = 14500 + Math.random() * 5000;
 
       element.style.left = `${route.sx * 100}%`;
