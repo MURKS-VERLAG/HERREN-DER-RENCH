@@ -2038,18 +2038,15 @@
 
     function createRandomMinuteSpawnTimes() {
       /*
-        Exakt vier Spawns pro 60 Sekunden, aber bewusst unregelmäßig.
-        Mindestabstand sechs Sekunden; erster Spawn nach wenigen Sekunden.
+        Exakt 30 Spawns pro 60 Sekunden, weiterhin bewusst unregelmäßig.
+        Je ein Ritter pro Zwei-Sekunden-Fenster verhindert Endlosschleifen
+        und hält die Gesamtzahl zuverlässig bei genau 30 pro Minute.
       */
-      let times;
-      do {
-        times = Array.from({ length: 30 }, () => 1200 + Math.random() * 58800)
-          .sort((a, b) => a - b);
-      } while (
-        times[0] < 2800 ||
-        times.some((time, index) => index > 0 && time - times[index - 1] < 900)
-      );
-      return times;
+      const slotLength = 2000;
+      return Array.from({ length: 30 }, (_, index) => {
+        const slotStart = index * slotLength;
+        return slotStart + 350 + Math.random() * 1300;
+      });
     }
 
     function scheduleSchauenburgMinute() {
