@@ -1,0 +1,2770 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Die Herren der Rench</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    #stage {
+      position: relative;
+      width: min(100vw, calc(100vh * 1345 / 948));
+      height: min(100vh, calc(100vw * 948 / 1345));
+      overflow: hidden;
+      background: #000;
+      isolation: isolate;
+    }
+
+    #bild2,
+    #bild1Source,
+    #bild1Canvas,
+    #particleCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #bild2 {
+      z-index: 1;
+      object-fit: fill;
+      pointer-events: none;
+    }
+
+    #bild1Source {
+      z-index: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #bild1Canvas {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Organischer Dauernebel: ab Sekunde 1 im ganzen Bild, ohne sichtbaren Schnitt. */
+    #fog {
+      position: absolute;
+      inset: -8%;
+      z-index: 3;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0.78;
+    }
+
+    .fog-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      will-change: background-position, transform;
+      filter: blur(18px);
+      background-repeat: repeat;
+      background-size: 55% 72%;
+    }
+
+    .fog-layer.one {
+      opacity: 0.58;
+      background-image:
+        radial-gradient(ellipse at 15% 68%, rgba(250,250,250,.74) 0 7%, rgba(210,210,210,.38) 19%, transparent 42%),
+        radial-gradient(ellipse at 48% 52%, rgba(235,235,235,.64) 0 8%, rgba(185,185,185,.31) 21%, transparent 44%),
+        radial-gradient(ellipse at 82% 74%, rgba(248,248,248,.70) 0 7%, rgba(198,198,198,.35) 20%, transparent 43%);
+      animation:
+        fogFlowOne 18s linear infinite,
+        fogBreatheOne 7s ease-in-out infinite alternate;
+    }
+
+    .fog-layer.two {
+      opacity: 0.40;
+      background-size: 68% 86%;
+      background-image:
+        radial-gradient(ellipse at 8% 38%, rgba(220,220,220,.55) 0 7%, rgba(160,160,160,.27) 20%, transparent 43%),
+        radial-gradient(ellipse at 41% 70%, rgba(242,242,242,.61) 0 8%, rgba(180,180,180,.29) 22%, transparent 46%),
+        radial-gradient(ellipse at 76% 44%, rgba(226,226,226,.52) 0 8%, rgba(166,166,166,.25) 20%, transparent 43%);
+      animation:
+        fogFlowTwo 27s linear infinite,
+        fogBreatheTwo 10s ease-in-out infinite alternate;
+    }
+
+    .fog-layer.three {
+      opacity: 0.28;
+      background-size: 42% 58%;
+      background-image:
+        radial-gradient(ellipse at 18% 58%, rgba(255,255,255,.52) 0 6%, rgba(205,205,205,.25) 18%, transparent 40%),
+        radial-gradient(ellipse at 57% 33%, rgba(232,232,232,.46) 0 7%, rgba(175,175,175,.21) 19%, transparent 42%),
+        radial-gradient(ellipse at 91% 66%, rgba(246,246,246,.49) 0 6%, rgba(192,192,192,.23) 18%, transparent 40%);
+      animation:
+        fogFlowThree 34s linear infinite,
+        fogBreatheThree 13s ease-in-out infinite alternate;
+    }
+
+    @keyframes fogFlowOne {
+      from { background-position: 0% 0%, 0% 0%, 0% 0%; }
+      to   { background-position: 110% 0%, 110% 0%, 110% 0%; }
+    }
+
+    @keyframes fogFlowTwo {
+      from { background-position: -35% 8%, -35% 8%, -35% 8%; }
+      to   { background-position: 75% 8%, 75% 8%, 75% 8%; }
+    }
+
+    @keyframes fogFlowThree {
+      from { background-position: -70% -4%, -70% -4%, -70% -4%; }
+      to   { background-position: 40% -4%, 40% -4%, 40% -4%; }
+    }
+
+    @keyframes fogBreatheOne {
+      from { transform: translate3d(0, -1.5%, 0) scale(1.04); }
+      to   { transform: translate3d(0, 1.5%, 0) scale(1.10); }
+    }
+
+    @keyframes fogBreatheTwo {
+      from { transform: translate3d(0, 1%, 0) scale(1.08); }
+      to   { transform: translate3d(0, -1%, 0) scale(1.03); }
+    }
+
+    @keyframes fogBreatheThree {
+      from { transform: translate3d(0, -0.8%, 0) scale(1.02); }
+      to   { transform: translate3d(0, 0.8%, 0) scale(1.07); }
+    }
+
+    #particleCanvas {
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    #gateHotspot {
+      position: absolute;
+      z-index: 6;
+      left: 40.3%;
+      top: 59.2%;
+      width: 19.2%;
+      height: 39.8%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Lautsprecher unten rechts: Musik an/aus. */
+    #muteButton {
+      position: absolute;
+      z-index: 8;
+      right: 2.2%;
+      bottom: 3.0%;
+      width: 46px;
+      height: 46px;
+      margin: 0;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,.42);
+      border-radius: 50%;
+      background: rgba(0,0,0,.58);
+      color: rgba(255,255,255,.94);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      outline: none;
+      box-shadow: 0 0 16px rgba(0,0,0,.45);
+      transition: transform .18s ease, background .18s ease, opacity .18s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #muteButton:hover,
+    #muteButton:focus-visible {
+      transform: scale(1.08);
+      background: rgba(0,0,0,.78);
+    }
+
+    #muteButton svg {
+      width: 25px;
+      height: 25px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    #muteButton .icon-muted { display: none; }
+    #muteButton.muted .icon-sound { display: none; }
+    #muteButton.muted .icon-muted { display: block; }
+
+    /* Zweiter Bildschirm: unverzerrtes Motiv in einem dicken mittelalterlichen Rahmen. */
+    #selectionScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #050505;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 440ms ease-in-out, visibility 0s linear 440ms;
+    }
+
+    #selectionScreen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 440ms ease-in-out;
+    }
+
+    #selectionFrame {
+      position: relative;
+      width: min(96%, calc(92vh * 1337 / 948));
+      aspect-ratio: 1337 / 948;
+      padding: clamp(15px, 1.9vw, 30px);
+      background:
+        linear-gradient(90deg, transparent 0 2%, #111 2% 3%, transparent 3% 97%, #111 97% 98%, transparent 98%),
+        linear-gradient(transparent 0 2%, #111 2% 3%, transparent 3% 97%, #111 97% 98%, transparent 98%),
+        repeating-linear-gradient(45deg, #f4f4f0 0 7px, #111 7px 10px, #d8d8d3 10px 17px);
+      border: clamp(5px, .65vw, 10px) double #111;
+      outline: clamp(3px, .35vw, 6px) solid #e9e9e5;
+      box-shadow:
+        0 0 0 clamp(7px, .85vw, 13px) #111,
+        0 0 0 clamp(10px, 1.15vw, 18px) #deded9,
+        0 0 30px rgba(0,0,0,.72);
+    }
+
+    #selectionFrame::before,
+    #selectionFrame::after {
+      content: "✦";
+      position: absolute;
+      z-index: 4;
+      top: 50%;
+      width: clamp(26px, 3vw, 48px);
+      height: clamp(26px, 3vw, 48px);
+      display: grid;
+      place-items: center;
+      border: 3px solid #111;
+      background: #efefeb;
+      color: #111;
+      font-size: clamp(20px, 2.2vw, 34px);
+      line-height: 1;
+      transform: translateY(-50%) rotate(45deg);
+      box-shadow: 0 0 0 3px #efefeb, 0 0 0 5px #111;
+    }
+
+    #selectionFrame::before { left: clamp(-22px, -1.7vw, -12px); }
+    #selectionFrame::after  { right: clamp(-22px, -1.7vw, -12px); }
+
+    #selectionImageArea {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #fff;
+      border: clamp(3px, .35vw, 6px) solid #111;
+      box-shadow: inset 0 0 0 2px #eee;
+    }
+
+    #selectionImage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      user-select: none;
+      pointer-events: none;
+      image-rendering: auto;
+    }
+
+    .title-hotspot,
+    #returnHotspot {
+      position: absolute;
+      z-index: 5;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #titleHotspotOne {
+      left: 8.0%;
+      top: 24.0%;
+      width: 34.5%;
+      height: 13.0%;
+    }
+
+    #titleHotspotTwo {
+      left: 43.0%;
+      top: 39.0%;
+      width: 34.0%;
+      height: 14.0%;
+    }
+
+    #titleHotspotThree {
+      left: 65.0%;
+      top: 17.0%;
+      width: 29.0%;
+      height: 15.0%;
+    }
+
+    .sword-marker {
+      position: absolute;
+      z-index: 7;
+      width: clamp(190px, 25%, 360px);
+      height: auto;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(.82);
+      filter: drop-shadow(0 0 4px rgba(255,255,255,.85));
+      transition: opacity 170ms ease, transform 190ms ease;
+    }
+
+    .title-hotspot:hover + .sword-marker,
+    .title-hotspot:focus-visible + .sword-marker {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #swordsOne {
+      left: 25.25%;
+      top: 30.5%;
+    }
+
+    #swordsTwo {
+      left: 60.0%;
+      top: 46.0%;
+    }
+
+    #swordsThree {
+      left: 79.5%;
+      top: 24.5%;
+    }
+
+    /* Einziger anklickbarer Rückweg: Torhaus unten links. */
+    #returnHotspot {
+      left: 5.5%;
+      top: 72.0%;
+      width: 8.8%;
+      height: 23.0%;
+      border-radius: 44% 44% 12% 12%;
+      box-shadow: 0 0 0 rgba(255,255,255,0);
+      transition:
+        background 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease,
+        filter 180ms ease;
+    }
+
+    #returnHotspot:hover,
+    #returnHotspot:focus-visible {
+      background: rgba(255,255,255,.13);
+      box-shadow:
+        0 0 18px rgba(255,255,255,.50),
+        0 0 38px rgba(255,255,255,.24);
+      filter: brightness(1.18);
+      transform: scale(1.045);
+    }
+
+
+
+    /* Neuer Hub: Die Herren der Rench. Alle bestehenden Bereiche bleiben unberührt. */
+    #renchHubScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 19;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #050505;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #renchHubScreen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    #renchHubFrame {
+      position: relative;
+      width: min(100vw, calc(100vh * 1196 / 896));
+      height: min(100vh, calc(100vw * 896 / 1196));
+      overflow: hidden;
+      background: #fff;
+      isolation: isolate;
+    }
+
+    #renchHubImage {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      user-select: none;
+      pointer-events: none;
+      image-rendering: auto;
+    }
+
+    .rench-character-hotspot {
+      position: absolute;
+      z-index: 4;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #renchBalianHotspot {
+      left: 6.7%;
+      top: 10.2%;
+      width: 17.8%;
+      height: 35.2%;
+    }
+
+    #renchJoergHotspot {
+      left: 41.8%;
+      top: 2.0%;
+      width: 19.1%;
+      height: 37.6%;
+    }
+
+    #renchReinholdHotspot {
+      left: 76.6%;
+      top: 10.3%;
+      width: 18.0%;
+      height: 35.2%;
+    }
+
+    .rench-sword-marker {
+      position: absolute;
+      z-index: 6;
+      width: clamp(145px, 18%, 270px);
+      height: auto;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(.82);
+      filter:
+        drop-shadow(0 0 4px rgba(255,255,255,.92))
+        drop-shadow(0 0 8px rgba(0,0,0,.35));
+      transition: opacity 170ms ease, transform 190ms ease;
+    }
+
+    .rench-character-hotspot:hover + .rench-sword-marker,
+    .rench-character-hotspot:focus-visible + .rench-sword-marker {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #renchSwordsBalian {
+      left: 15.7%;
+      top: 27.5%;
+    }
+
+    #renchSwordsJoerg {
+      left: 51.3%;
+      top: 20.5%;
+    }
+
+    #renchSwordsReinhold {
+      left: 85.7%;
+      top: 27.5%;
+    }
+
+    #renchBackButton {
+      position: absolute;
+      z-index: 9;
+      left: 1.0%;
+      bottom: 1.2%;
+      width: clamp(25px, 2.6%, 40px);
+      height: clamp(22px, 2.4%, 36px);
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: rgba(255,255,255,.68);
+      color: #111;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(16px, 1.7vw, 26px);
+      font-weight: 700;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      outline: none;
+      opacity: .72;
+      transition: opacity 160ms ease, transform 160ms ease, background 160ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #renchBackButton:hover,
+    #renchBackButton:focus-visible {
+      opacity: 1;
+      transform: translateX(-2px) scale(1.05);
+      background: rgba(255,255,255,.94);
+    }
+
+    /*
+      Übergang nur zu „Die Herren der Rench“:
+      Zwei echte Wellen-Sprites laufen weich am unteren Bildrand von links nach rechts.
+    */
+    #renchWaterTransition {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    #renchWaterTransition.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .rench-wave-sprite {
+      position: absolute;
+      left: 0;
+      bottom: -36%;
+      display: block;
+      height: auto;
+      object-fit: contain;
+      object-position: left bottom;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transform: translate3d(-125vw, 0, 0);
+      transform-origin: 50% 100%;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      filter: drop-shadow(0 -2px 7px rgba(12, 52, 76, .20));
+    }
+
+    #renchWaveOne {
+      z-index: 2;
+      width: clamp(760px, 89vw, 1460px);
+    }
+
+    #renchWaveTwo {
+      z-index: 3;
+      width: clamp(850px, 97vw, 1580px);
+    }
+
+    #renchWaterTransition.active #renchWaveOne {
+      animation: renchWaveOnePass 2900ms cubic-bezier(.34,.02,.19,1) forwards;
+    }
+
+    #renchWaterTransition.active #renchWaveTwo {
+      animation: renchWaveTwoPass 2900ms cubic-bezier(.34,.02,.19,1) 430ms forwards;
+    }
+
+    @keyframes renchWaveOnePass {
+      0% {
+        opacity: 0;
+        transform: translate3d(-118vw, 0, 0);
+      }
+      8% {
+        opacity: .22;
+      }
+      18% {
+        opacity: .96;
+      }
+      54% {
+        opacity: 1;
+        transform: translate3d(7vw, 0, 0);
+      }
+      84% {
+        opacity: .96;
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(122vw, 0, 0);
+      }
+    }
+
+    @keyframes renchWaveTwoPass {
+      0% {
+        opacity: 0;
+        transform: translate3d(-126vw, 0, 0);
+      }
+      9% {
+        opacity: .18;
+      }
+      20% {
+        opacity: .98;
+      }
+      53% {
+        opacity: 1;
+        transform: translate3d(2vw, 0, 0);
+      }
+      86% {
+        opacity: .94;
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(126vw, 0, 0);
+      }
+    }
+
+    #renchHubScreen.returning-to-selection {
+      pointer-events: none;
+      animation: renchHubClose 520ms ease-in-out forwards;
+    }
+
+    @keyframes renchHubClose {
+      from { opacity: 1; transform: scale(1); }
+      to   { opacity: 0; transform: scale(.992); }
+    }
+
+    /* Spielszene: Der Straßburger Warenzug. */
+    #warenzugScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #000;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 440ms ease-in-out, visibility 0s linear 440ms;
+    }
+
+    #warenzugScreen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 440ms ease-in-out;
+    }
+
+    #warenzugWorld {
+      position: relative;
+      width: min(100vw, calc(100vh * 3 / 2));
+      height: min(100vh, calc(100vw * 2 / 3));
+      overflow: hidden;
+      background: #000;
+      isolation: isolate;
+    }
+
+    #warenzugBackground {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    #joergPlayer,
+    #joergHoldPlayer,
+    #joergGroundPlayer {
+      position: absolute;
+      z-index: 3;
+      left: 10%;
+      bottom: 24.8%;
+      width: clamp(105px, 14.5%, 225px);
+      height: auto;
+      display: block;
+      transform-origin: 50% 100%;
+      user-select: none;
+      pointer-events: none;
+      will-change: left, bottom, transform;
+      filter: drop-shadow(0 5px 4px rgba(0,0,0,.28));
+    }
+
+    #joergPlayer.facing-left,
+    #joergHoldPlayer.facing-left {
+      transform: scaleX(-1);
+    }
+
+    #joergPlayer.ducking {
+      transform: scaleY(.63);
+    }
+
+    #joergPlayer.facing-left.ducking {
+      transform: scaleX(-1) scaleY(.63);
+    }
+
+    #joergPlayer.attacking {
+      animation: joergMaceStrike 310ms ease-in-out;
+    }
+
+    #joergPlayer.facing-left.attacking {
+      animation: joergMaceStrikeLeft 310ms ease-in-out;
+    }
+
+    @keyframes joergMaceStrike {
+      0%   { transform: rotate(0deg) translateX(0); }
+      38%  { transform: rotate(-7deg) translateX(1.5%); }
+      68%  { transform: rotate(6deg) translateX(4%); }
+      100% { transform: rotate(0deg) translateX(0); }
+    }
+
+    @keyframes joergMaceStrikeLeft {
+      0%   { transform: scaleX(-1) rotate(0deg) translateX(0); }
+      38%  { transform: scaleX(-1) rotate(-7deg) translateX(1.5%); }
+      68%  { transform: scaleX(-1) rotate(6deg) translateX(4%); }
+      100% { transform: scaleX(-1) rotate(0deg) translateX(0); }
+    }
+
+
+    /* Rückweg aus der Warenzug-Spielszene. */
+    #gameReturnHotspot {
+      position: absolute;
+      z-index: 8;
+      left: 2.5%;
+      bottom: 2.5%;
+      width: clamp(60px, 7.5%, 110px);
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #gameReturnGate {
+      width: 100%;
+      height: auto;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      transform-origin: 50% 100%;
+      transition:
+        transform 180ms ease,
+        filter 180ms ease;
+    }
+
+    #gameReturnHotspot:hover #gameReturnGate,
+    #gameReturnHotspot:focus-visible #gameReturnGate {
+      transform: scale(1.045);
+      filter:
+        brightness(1.18)
+        drop-shadow(0 0 8px rgba(255,255,255,.55))
+        drop-shadow(0 0 18px rgba(255,255,255,.28));
+    }
+
+
+    /* Beide Jörg-Bilder werden vorgeladen; nur eines ist jeweils sichtbar. */
+    #joergPlayer {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #joergHoldPlayer {
+      width: clamp(118px, 16.2%, 250px);
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    #joergGroundPlayer {
+      width: clamp(118px, 16.2%, 250px);
+      opacity: 0;
+      visibility: hidden;
+      transform: scaleX(-1);
+    }
+
+    #joergHoldPlayer.visible,
+    #joergGroundPlayer.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #joergPlayer.hidden-for-hold {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    #joergHoldPlayer.facing-left {
+      transform: scaleX(-1);
+    }
+
+    #joergGroundPlayer.facing-left {
+      transform: scaleX(1);
+    }
+
+
+    /* Belagerung der Schauenburg 1432: eigenständiger Comic-Schurkenübergang. */
+    #schauenburgTransition {
+      position: fixed;
+      inset: 0;
+      z-index: 180;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: #ded8c8;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      isolation: isolate;
+    }
+
+    #schauenburgTransition.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #schauenburgSpiral {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 1;
+      width: 190vmax;
+      height: 190vmax;
+      border-radius: 50%;
+      transform: translate3d(-50%, -50%, 0) rotate(0deg);
+      background:
+        repeating-conic-gradient(
+          from 0deg,
+          #111 0deg 8deg,
+          #e4dfd1 8deg 18deg,
+          #343434 18deg 22deg,
+          #f0eadb 22deg 34deg
+        );
+      box-shadow: inset 0 0 11vmax rgba(0,0,0,.34);
+      filter: contrast(1.15) grayscale(1);
+      will-change: transform;
+    }
+
+    #schauenburgSpiral::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center,
+          transparent 0 5%,
+          rgba(0,0,0,.16) 12%,
+          transparent 21%,
+          rgba(0,0,0,.12) 35%,
+          transparent 52%,
+          rgba(0,0,0,.18) 76%,
+          transparent 100%);
+      mix-blend-mode: multiply;
+    }
+
+    #friedrichBockTransition {
+      position: relative;
+      z-index: 3;
+      display: block;
+      width: min(49vw, 61vh);
+      max-height: 93vh;
+      object-fit: contain;
+      opacity: 0;
+      transform: translate3d(0, 0, 0) rotate(-270deg) scale(.28);
+      transform-origin: 50% 52%;
+      filter:
+        drop-shadow(0 9px 2px rgba(255,255,255,.78))
+        drop-shadow(0 14px 14px rgba(0,0,0,.62));
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+    }
+
+    #schauenburgTransition.active #schauenburgSpiral {
+      animation: schauenburgSpiralSpin 1500ms cubic-bezier(.22,.64,.26,1) forwards;
+    }
+
+    #schauenburgTransition.active #friedrichBockTransition {
+      animation: friedrichVillainEntrance 1500ms cubic-bezier(.18,.72,.22,1) forwards;
+    }
+
+    #schauenburgTransition.fade-out {
+      animation: schauenburgTransitionFade 620ms ease-in-out forwards;
+    }
+
+    @keyframes schauenburgSpiralSpin {
+      from { transform: translate3d(-50%, -50%, 0) rotate(0deg) scale(.84); }
+      to   { transform: translate3d(-50%, -50%, 0) rotate(720deg) scale(1); }
+    }
+
+    @keyframes friedrichVillainEntrance {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) rotate(-270deg) scale(.28);
+      }
+      18% { opacity: 1; }
+      78% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotate(20deg) scale(1.06);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes schauenburgTransitionFade {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+
+    #schauenburgScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 45;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #000;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 620ms ease-in-out, visibility 0s linear 620ms;
+    }
+
+    #schauenburgScreen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 620ms ease-in-out;
+    }
+
+    #schauenburgOverview {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      object-fit: contain;
+      object-position: center;
+      user-select: none;
+      pointer-events: none;
+      background: #000;
+    }
+
+
+    /* Ergänzungen ausschließlich im fertigen Schauenburg-Belagerungsbild. */
+    #schauenburgScreen {
+      cursor: default;
+    }
+
+    #schauenburgScreen.aiming {
+      cursor: default;
+    }
+
+    #schauenburgAim {
+      position: absolute;
+      z-index: 7;
+      left: 50%;
+      top: 50%;
+      width: 34px;
+      height: 34px;
+      transform: translate3d(-50%, -50%, 0);
+      pointer-events: none;
+      opacity: 0;
+      will-change: left, top, transform;
+      filter:
+        drop-shadow(0 0 1px rgba(255,255,255,.95))
+        drop-shadow(0 0 2px rgba(0,0,0,.95));
+    }
+
+    #schauenburgScreen.active #schauenburgAim {
+      opacity: 1;
+    }
+
+    #schauenburgAim::before,
+    #schauenburgAim::after {
+      content: "";
+      position: absolute;
+      background: rgba(245,245,240,.94);
+      box-shadow: 0 0 1px #000;
+    }
+
+    #schauenburgAim::before {
+      left: 16px;
+      top: 0;
+      width: 2px;
+      height: 34px;
+    }
+
+    #schauenburgAim::after {
+      left: 0;
+      top: 16px;
+      width: 34px;
+      height: 2px;
+    }
+
+    #schauenburgAimRing {
+      position: absolute;
+      left: 9px;
+      top: 9px;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(245,245,240,.94);
+      border-radius: 50%;
+      box-shadow: 0 0 1px #000;
+    }
+
+    #schauenburgBackFlag {
+      position: absolute;
+      z-index: 12;
+      left: 1.2%;
+      bottom: 1.5%;
+      width: 34px;
+      height: 42px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #schauenburgBackFlag .flag-pole {
+      position: absolute;
+      left: 5px;
+      bottom: 2px;
+      width: 2px;
+      height: 36px;
+      background: #111;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.65);
+    }
+
+    #schauenburgBackFlag .flag-cloth {
+      position: absolute;
+      left: 7px;
+      top: 3px;
+      width: 23px;
+      height: 15px;
+      background: #fff;
+      border: 1.5px solid #111;
+      clip-path: polygon(0 0, 100% 12%, 82% 50%, 100% 88%, 0 100%);
+      transform-origin: left center;
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    #schauenburgBackFlag:hover .flag-cloth,
+    #schauenburgBackFlag:focus-visible .flag-cloth {
+      transform: scale(1.09) skewY(-3deg);
+      filter: drop-shadow(0 0 4px rgba(255,255,255,.9));
+    }
+
+    .schauenburg-arrow {
+      position: absolute;
+      z-index: 8;
+      width: 74px;
+      height: 10px;
+      pointer-events: none;
+      transform-origin: 0 50%;
+      will-change: transform, opacity;
+    }
+
+    .schauenburg-arrow::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 4px;
+      width: 58px;
+      height: 2px;
+      background: #eee;
+      box-shadow: 0 0 1px #000;
+    }
+
+    .schauenburg-arrow::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 1px;
+      width: 0;
+      height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 12px solid #eee;
+      filter: drop-shadow(0 0 1px #000);
+    }
+
+    .schauenburg-arrow-tail {
+      position: absolute;
+      left: 0;
+      top: 1px;
+      width: 12px;
+      height: 8px;
+    }
+
+    .schauenburg-arrow-tail::before,
+    .schauenburg-arrow-tail::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 11px;
+      height: 3px;
+      background: #eee;
+      box-shadow: 0 0 1px #000;
+    }
+
+    .schauenburg-arrow-tail::before {
+      top: 0;
+      transform: skewX(-28deg);
+    }
+
+    .schauenburg-arrow-tail::after {
+      bottom: 0;
+      transform: skewX(28deg);
+    }
+
+
+    /* BELAGERUNG V1: ausschließlich innerhalb von #schauenburgScreen. */
+    #schauenburgHealth {
+      position: absolute;
+      z-index: 11;
+      left: 50%;
+      top: -3.2%;
+      width: min(64vw, 760px);
+      transform: translateX(-50%);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 300ms ease;
+    }
+
+    #schauenburgScreen.active #schauenburgHealth {
+      opacity: 1;
+    }
+
+    #schauenburgHealthImage {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: auto;
+      display: block;
+      pointer-events: none;
+    }
+
+    #schauenburgHealthLoss {
+      position: absolute;
+      z-index: 1;
+      right: 8.6%;
+      top: 42.8%;
+      width: 0%;
+      height: 13.4%;
+      background: #050505;
+      border-radius: 0 999px 999px 0;
+      transition: width 650ms ease;
+      pointer-events: none;
+    }
+
+    #schauenburgEnemyLayer,
+    #schauenburgEffectLayer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    #schauenburgEnemyLayer { z-index: 6; }
+    #schauenburgEffectLayer { z-index: 9; }
+
+    .schauenburg-enemy {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: clamp(62px, 7.3vw, 118px);
+      height: auto;
+      transform: translate3d(-50%, -100%, 0);
+      transform-origin: 50% 100%;
+      user-select: none;
+      pointer-events: none;
+      will-change: left, top, transform;
+      filter: drop-shadow(0 5px 4px rgba(0,0,0,.48));
+    }
+
+    .schauenburg-enemy.dead {
+      width: clamp(88px, 10.8vw, 170px);
+      transform: translate3d(-50%, -74%, 0);
+      z-index: 7;
+    }
+
+    .schauenburg-enemy.at-wall {
+      animation: schauenburgWallShake 250ms ease-in-out 3;
+    }
+
+    @keyframes schauenburgWallShake {
+      0%, 100% { margin-left: 0; }
+      35% { margin-left: -3px; }
+      70% { margin-left: 3px; }
+    }
+
+    .schauenburg-dust {
+      position: absolute;
+      width: 90px;
+      height: 58px;
+      transform: translate(-50%, -56%);
+      pointer-events: none;
+    }
+
+    .schauenburg-dust i {
+      position: absolute;
+      left: 50%;
+      top: 65%;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(155,139,112,.78);
+      box-shadow: 0 0 3px rgba(0,0,0,.45);
+      animation: schauenburgDustBurst 900ms ease-out forwards;
+    }
+
+    .schauenburg-dust i:nth-child(2) { --dx: -31px; --dy: -27px; animation-delay: 40ms; }
+    .schauenburg-dust i:nth-child(3) { --dx: 28px; --dy: -30px; animation-delay: 75ms; }
+    .schauenburg-dust i:nth-child(4) { --dx: -18px; --dy: -43px; animation-delay: 110ms; }
+    .schauenburg-dust i:nth-child(5) { --dx: 39px; --dy: -16px; animation-delay: 145ms; }
+    .schauenburg-dust i:nth-child(6) { --dx: 8px; --dy: -48px; animation-delay: 180ms; }
+
+    .schauenburg-dust i:first-child { --dx: -42px; --dy: -12px; }
+
+    @keyframes schauenburgDustBurst {
+      0% {
+        opacity: 0;
+        transform: translate3d(0,0,0) scale(.45);
+      }
+      18% { opacity: .95; }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--dx), var(--dy), 0) scale(2.15);
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="Hauptmenü Die Herren der Rench">
+    <img id="bild2" src="bild-2.jpg" alt="">
+    <img id="bild1Source" src="bild-1.jpg" alt="">
+    <canvas id="bild1Canvas" aria-hidden="true"></canvas>
+
+    <div id="fog" aria-hidden="true">
+      <div class="fog-layer one"></div>
+      <div class="fog-layer two"></div>
+      <div class="fog-layer three"></div>
+    </div>
+
+    <canvas id="particleCanvas" aria-hidden="true"></canvas>
+    <button id="gateHotspot" type="button" aria-label="Burgtor"></button>
+    <button id="muteButton" type="button" aria-label="Musik stummschalten" title="Musik stummschalten">
+      <svg class="icon-sound" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z"></path>
+        <path d="M16 8.5a5 5 0 0 1 0 7"></path>
+        <path d="M18.5 6a8.5 8.5 0 0 1 0 12"></path>
+      </svg>
+      <svg class="icon-muted" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z"></path>
+        <path d="m17 9 5 5"></path>
+        <path d="m22 9-5 5"></path>
+      </svg>
+    </button>
+
+    <audio id="musicOne" src="musik-bild-1.mp3" preload="auto" loop></audio>
+    <audio id="musicTwo" src="musik-bild-2.mp3" preload="auto" loop></audio>
+  </main>
+
+  <section id="selectionScreen" aria-label="Auswahlbildschirm" aria-hidden="true">
+    <div id="selectionFrame">
+      <div id="selectionImageArea">
+        <img id="selectionImage" src="auswahl-bildschirm-1.jpg" alt="Auswahlbildschirm">
+
+        <button id="titleHotspotOne" class="title-hotspot" type="button" aria-label="Die Herren der Rench"></button>
+        <img id="swordsOne" class="sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+        <button id="titleHotspotTwo" class="title-hotspot" type="button" aria-label="Der Straßburger Warenzug"></button>
+        <img id="swordsTwo" class="sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+        <button id="titleHotspotThree" class="title-hotspot" type="button" aria-label="Belagerung der Schauenburg 1432"></button>
+        <img id="swordsThree" class="sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+        <button id="returnHotspot" type="button" aria-label="Zurück zum Hauptmenü" title="Zurück zum Hauptmenü"></button>
+      </div>
+    </div>
+
+    <audio id="swordClang" src="schwert-klong.wav" preload="auto"></audio>
+    <audio id="gateSound" src="tor-gitter.wav" preload="auto"></audio>
+    <audio id="selectionMusic" src="musik-auswahlbildschirm.mp3" preload="auto" loop></audio>
+  </section>
+
+  <section id="renchHubScreen" aria-label="Die Herren der Rench" aria-hidden="true">
+    <div id="renchHubFrame">
+      <img id="renchHubImage" src="die-herren-der-rench-karte.png" alt="Die Herren der Rench">
+
+      <button id="renchBalianHotspot" class="rench-character-hotspot" type="button" aria-label="Balian ohne Burg"></button>
+      <img id="renchSwordsBalian" class="rench-sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+      <button id="renchJoergHotspot" class="rench-character-hotspot" type="button" aria-label="Jörg der Böse"></button>
+      <img id="renchSwordsJoerg" class="rench-sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+      <button id="renchReinholdHotspot" class="rench-character-hotspot" type="button" aria-label="Reinhold Ringelnatz"></button>
+      <img id="renchSwordsReinhold" class="rench-sword-marker" src="gekreuzte-schwerter.png" alt="">
+
+      <button id="renchBackButton" type="button" aria-label="Zurück zur Spielmodus-Auswahl" title="Zurück">←</button>
+    </div>
+  </section>
+
+  <div id="renchWaterTransition" aria-hidden="true">
+    <img id="renchWaveOne" class="rench-wave-sprite" src="rench-welle-1.png" alt="">
+    <img id="renchWaveTwo" class="rench-wave-sprite" src="rench-welle-2.png" alt="">
+    <audio id="renchWaveSound" src="rench-wellenrauschen.wav" preload="auto"></audio>
+  </div>
+
+
+  <div id="schauenburgTransition" aria-hidden="true">
+    <div id="schauenburgSpiral"></div>
+    <img id="friedrichBockTransition" src="friedrich-bock.png" alt="">
+    <audio id="schauenburgHorn" src="angriffshorn.wav" preload="auto"></audio>
+  </div>
+
+  <section id="schauenburgScreen" aria-label="Belagerung der Schauenburg 1432" aria-hidden="true">
+    <img id="schauenburgOverview" src="schauenburg-belagerung.png" alt="Belagerung der Schauenburg 1432">
+
+    <div id="schauenburgHealth" aria-label="Lebensleiste der Schauenburg">
+      <div id="schauenburgHealthLoss"></div>
+      <img id="schauenburgHealthImage" src="schauenburg-lebensleiste.png" alt="">
+    </div>
+
+    <div id="schauenburgEnemyLayer" aria-hidden="true"></div>
+    <div id="schauenburgEffectLayer" aria-hidden="true"></div>
+
+    <div id="schauenburgAim" aria-hidden="true">
+      <span id="schauenburgAimRing"></span>
+    </div>
+
+    <button id="schauenburgBackFlag" type="button" aria-label="Zurück zur Spielmodi-Auswahl" title="Zurück">
+      <span class="flag-pole"></span>
+      <span class="flag-cloth"></span>
+    </button>
+
+    <audio id="schauenburgChicken" src="huehner-gackern.wav" preload="auto"></audio>
+    <audio id="schauenburgBow" src="pfeil-und-bogen.wav" preload="auto"></audio>
+    <audio id="schauenburgPickaxe" src="spitzhacke-stein.wav" preload="auto"></audio>
+  </section>
+
+  <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
+    <div id="warenzugWorld">
+      <img id="warenzugBackground" src="warenzug-ebene.png" alt="">
+      <img id="joergPlayer" src="joerg-farbig.png?v=7" alt="Jörg">
+      <img id="joergHoldPlayer" src="joerg-schlag-ausholen.png?v=7" alt="" aria-hidden="true">
+      <img id="joergGroundPlayer" src="joerg-schlag-boden.png?v=7" alt="" aria-hidden="true">
+
+      <button id="gameReturnHotspot" type="button" aria-label="Zurück zur Auswahl" title="Zurück zur Auswahl">
+        <img id="gameReturnGate" src="torhaus-zurueck.png" alt="">
+      </button>
+    </div>
+  </section>
+
+  <script>
+    "use strict";
+
+    const REVEAL_DURATION = 3600;
+    const RETURN_DURATION = 2800;
+    const EDGE_COLUMNS = 70;
+    const EDGE_DEPTH = 0.026;
+    const STONE_ROWS = 3;
+    const PARTICLE_LIMIT = 150;
+    const MUSIC_MAX_VOLUME = 0.72;
+    const MUSIC_FADE_SECONDS = 2.4;
+
+    const stage = document.getElementById("stage");
+    const imageOne = document.getElementById("bild1Source");
+    const imageCanvas = document.getElementById("bild1Canvas");
+    const particleCanvas = document.getElementById("particleCanvas");
+    const gateHotspot = document.getElementById("gateHotspot");
+    const muteButton = document.getElementById("muteButton");
+    const musicOne = document.getElementById("musicOne");
+    const musicTwo = document.getElementById("musicTwo");
+    const selectionScreen = document.getElementById("selectionScreen");
+    const returnHotspot = document.getElementById("returnHotspot");
+    const titleHotspots = Array.from(document.querySelectorAll(".title-hotspot"));
+    const swordClang = document.getElementById("swordClang");
+    const gateSound = document.getElementById("gateSound");
+    const selectionMusic = document.getElementById("selectionMusic");
+    const titleHotspotOne = document.getElementById("titleHotspotOne");
+    const titleHotspotTwo = document.getElementById("titleHotspotTwo");
+    const titleHotspotThree = document.getElementById("titleHotspotThree");
+    const renchHubScreen = document.getElementById("renchHubScreen");
+    const renchBackButton = document.getElementById("renchBackButton");
+    const renchWaterTransition = document.getElementById("renchWaterTransition");
+    const renchWaveSound = document.getElementById("renchWaveSound");
+    const renchCharacterHotspots = Array.from(document.querySelectorAll(".rench-character-hotspot"));
+    const warenzugScreen = document.getElementById("warenzugScreen");
+    const warenzugWorld = document.getElementById("warenzugWorld");
+    const joergPlayer = document.getElementById("joergPlayer");
+    const joergHoldPlayer = document.getElementById("joergHoldPlayer");
+    const joergGroundPlayer = document.getElementById("joergGroundPlayer");
+    const gameReturnHotspot = document.getElementById("gameReturnHotspot");
+    const schauenburgTransition = document.getElementById("schauenburgTransition");
+    const schauenburgScreen = document.getElementById("schauenburgScreen");
+    const schauenburgHorn = document.getElementById("schauenburgHorn");
+    const schauenburgAim = document.getElementById("schauenburgAim");
+    const schauenburgBackFlag = document.getElementById("schauenburgBackFlag");
+    const schauenburgChicken = document.getElementById("schauenburgChicken");
+    const schauenburgBow = document.getElementById("schauenburgBow");
+    const schauenburgHealthLoss = document.getElementById("schauenburgHealthLoss");
+    const schauenburgEnemyLayer = document.getElementById("schauenburgEnemyLayer");
+    const schauenburgEffectLayer = document.getElementById("schauenburgEffectLayer");
+    const schauenburgPickaxe = document.getElementById("schauenburgPickaxe");
+
+    const imageContext = imageCanvas.getContext("2d");
+    const particleContext = particleCanvas.getContext("2d");
+
+    let width = 0;
+    let height = 0;
+    let pixelRatio = 1;
+    let progress = 0;
+    let targetProgress = 0;
+    let previousTime = performance.now();
+    let frameRequest = null;
+    let particles = [];
+    let audioUnlocked = false;
+    let gateActive = false;
+    let audioMixerTimer = null;
+    let lastPointerX = -1;
+    let lastPointerY = -1;
+    let isMuted = false;
+    let selectionOpen = false;
+    let selectionTransitioning = false;
+    let openSelectionWhenReady = false;
+    let warenzugOpen = false;
+    let renchHubOpen = false;
+    let renchHubTransitioning = false;
+    let schauenburgOpen = false;
+    let schauenburgTransitioning = false;
+    let schauenburgAimX = 0.50;
+    let schauenburgAimY = 0.50;
+    let schauenburgAimFrame = null;
+    let schauenburgPreviousTime = performance.now();
+    const schauenburgKeys = new Set();
+    let schauenburgChickenReady = true;
+    let schauenburgHealth = 100;
+    let schauenburgEnemySequence = 0;
+    let schauenburgEnemyId = 0;
+    let schauenburgSpawnTimers = [];
+    let schauenburgWaveTimer = null;
+    const schauenburgEnemies = new Map();
+    let gameFrameRequest = null;
+    let gamePreviousTime = performance.now();
+    let playerX = 0.10;
+    let playerY = 0;
+    let playerVelocityY = 0;
+    let playerFacing = 1;
+    let playerGrounded = true;
+    let playerAttacking = false;
+    const gameKeys = new Set();
+
+    const joergNormalPreload = new Image();
+    joergNormalPreload.src = "joerg-farbig.png?v=7";
+    const joergHoldPreload = new Image();
+    joergHoldPreload.src = "joerg-schlag-ausholen.png?v=7";
+    const joergGroundPreload = new Image();
+    joergGroundPreload.src = "joerg-schlag-boden.png?v=7";
+
+    const SPACE_HOLD_DELAY = 220;
+    let spacePressed = false;
+    let spaceHeld = false;
+    let spaceHoldTimer = null;
+    let maceGroundState = false;
+
+    musicOne.volume = 0;
+    musicTwo.volume = 0;
+    selectionMusic.volume = 0;
+
+    const edgeNoise = Array.from({ length: EDGE_COLUMNS + 1 }, (_, index) => {
+      const waveA = Math.sin(index * 1.91) * 0.52;
+      const waveB = Math.sin(index * 4.27 + 0.8) * 0.28;
+      const random = (Math.random() - 0.5) * 0.45;
+      return waveA + waveB + random;
+    });
+
+    function resizeCanvases() {
+      const rectangle = stage.getBoundingClientRect();
+      width = Math.max(1, Math.round(rectangle.width));
+      height = Math.max(1, Math.round(rectangle.height));
+      pixelRatio = Math.max(1, window.devicePixelRatio || 1);
+
+      for (const canvas of [imageCanvas, particleCanvas]) {
+        canvas.width = Math.round(width * pixelRatio);
+        canvas.height = Math.round(height * pixelRatio);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+      }
+
+      imageContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      particleContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      drawImageOne();
+      drawParticles();
+    }
+
+    function jaggedEdgeY(columnIndex) {
+      const base = progress * height;
+      const strength = Math.sin(progress * Math.PI) * height * EDGE_DEPTH;
+      const timeWave = Math.sin(columnIndex * 0.72 + progress * 14) * strength * 0.22;
+      return Math.max(0, Math.min(height, base + edgeNoise[columnIndex] * strength + timeWave));
+    }
+
+    /*
+      Neuer Bildwechsel: Die obere Bildebene wirkt wie eine gezeichnete
+      Burgmauer. Entlang der wandernden Bruchkante lösen sich große,
+      unregelmäßige Mauersteine. Geschwindigkeit und Richtung bleiben
+      unverändert: von oben nach unten und beim Verlassen wieder zurück.
+    */
+    function stoneShape(context, x, y, stoneWidth, stoneHeight, seed) {
+      const notch = Math.max(1.2, stoneWidth * 0.08);
+      const skew = Math.sin(seed * 2.17) * stoneWidth * 0.08;
+
+      context.beginPath();
+      context.moveTo(x + notch, y + Math.sin(seed) * 1.4);
+      context.lineTo(x + stoneWidth - notch, y + Math.cos(seed * 1.7) * 1.5);
+      context.lineTo(x + stoneWidth + skew, y + stoneHeight * 0.45);
+      context.lineTo(x + stoneWidth - notch * 0.7, y + stoneHeight);
+      context.lineTo(x + notch * 0.8, y + stoneHeight + Math.sin(seed * 3.1) * 1.2);
+      context.lineTo(x - skew * 0.35, y + stoneHeight * 0.48);
+      context.closePath();
+    }
+
+    function drawImageOne() {
+      imageContext.clearRect(0, 0, width, height);
+
+      if (!imageOne.complete || imageOne.naturalWidth === 0 || progress >= 1) return;
+
+      imageContext.drawImage(imageOne, 0, 0, width, height);
+      if (progress <= 0) return;
+
+      imageContext.save();
+      imageContext.globalCompositeOperation = "destination-out";
+
+      /* Zuerst verschwindet die bereits vollständig zerfallene Fläche. */
+      imageContext.beginPath();
+      imageContext.moveTo(0, 0);
+      imageContext.lineTo(width, 0);
+      for (let column = EDGE_COLUMNS; column >= 0; column -= 1) {
+        const x = (column / EDGE_COLUMNS) * width;
+        imageContext.lineTo(x, jaggedEdgeY(column) - height * 0.008);
+      }
+      imageContext.closePath();
+      imageContext.fill();
+
+      /* Danach werden an der Kante einzelne große Mauersteine herausgebrochen. */
+      const baseStoneWidth = Math.max(18, width / 24);
+      const baseStoneHeight = Math.max(10, height / 39);
+      const rows = STONE_ROWS;
+
+      for (let row = 0; row < rows; row += 1) {
+        const offset = row % 2 === 0 ? -baseStoneWidth * 0.25 : baseStoneWidth * 0.28;
+        const rowY = row * baseStoneHeight * 0.82;
+        const stones = Math.ceil(width / baseStoneWidth) + 2;
+
+        for (let index = -1; index < stones; index += 1) {
+          const seed = index * 7.13 + row * 19.7;
+          const variation = 0.78 + ((Math.sin(seed) + 1) * 0.16);
+          const stoneWidth = baseStoneWidth * variation;
+          const stoneHeight = baseStoneHeight * (0.80 + ((Math.cos(seed * 1.43) + 1) * 0.13));
+          const x = index * baseStoneWidth + offset;
+          const column = Math.max(0, Math.min(EDGE_COLUMNS, Math.round(((x + stoneWidth * 0.5) / width) * EDGE_COLUMNS)));
+          const edgeY = jaggedEdgeY(column);
+
+          /* Nicht alle Steine lösen sich gleichzeitig: dadurch bleibt die Kante organisch. */
+          const breakup = (Math.sin(seed * 2.31 + progress * 21) + 1) * 0.5;
+          const threshold = 0.28 + row * 0.16;
+          if (breakup > threshold) {
+            stoneShape(imageContext, x, edgeY - rowY - stoneHeight * 0.56, stoneWidth, stoneHeight, seed);
+            imageContext.fill();
+          }
+        }
+      }
+
+      imageContext.restore();
+    }
+
+    function spawnParticles(direction) {
+      if (progress <= 0.01 || progress >= 0.99) return;
+
+      /* Große, klar erkennbare Burgsteine statt feinem Staub. */
+      const count = direction > 0 ? 2 : 1;
+      for (let index = 0; index < count; index += 1) {
+        const x = Math.random() * width;
+        const column = Math.round((x / width) * EDGE_COLUMNS);
+        const size = Math.max(7, width * (0.010 + Math.random() * 0.014));
+        const returning = direction < 0;
+
+        particles.push({
+          x,
+          y: jaggedEdgeY(column) + (Math.random() - 0.5) * 8,
+          vx: (Math.random() - 0.5) * 0.75,
+          vy: returning ? -(0.45 + Math.random() * 0.85) : (0.45 + Math.random() * 1.15),
+          gravity: returning ? -0.007 : (0.014 + Math.random() * 0.018),
+          width: size * (1.25 + Math.random() * 0.75),
+          height: size * (0.62 + Math.random() * 0.38),
+          alpha: 0.58 + Math.random() * 0.30,
+          life: 34 + Math.random() * 48,
+          rotation: Math.random() * Math.PI,
+          spin: (Math.random() - 0.5) * 0.075,
+          seed: Math.random() * 100,
+          returning
+        });
+      }
+
+      if (particles.length > PARTICLE_LIMIT) {
+        particles.splice(0, particles.length - PARTICLE_LIMIT);
+      }
+    }
+
+    function updateParticles() {
+      for (const particle of particles) {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vy += particle.gravity;
+        particle.rotation += particle.spin;
+        particle.life -= 1;
+        particle.alpha *= 0.977;
+      }
+
+      particles = particles.filter(particle =>
+        particle.life > 0 &&
+        particle.alpha > 0.02 &&
+        particle.y < height + 45 &&
+        particle.y > -45
+      );
+    }
+
+    function drawParticles() {
+      particleContext.clearRect(0, 0, width, height);
+
+      for (const particle of particles) {
+        particleContext.save();
+        particleContext.translate(particle.x, particle.y);
+        particleContext.rotate(particle.rotation);
+
+        /* Simpler schwarz-weißer Federzeichnungsstil. */
+        stoneShape(
+          particleContext,
+          -particle.width / 2,
+          -particle.height / 2,
+          particle.width,
+          particle.height,
+          particle.seed
+        );
+        particleContext.fillStyle = `rgba(208, 208, 204, ${particle.alpha})`;
+        particleContext.strokeStyle = `rgba(20, 20, 20, ${Math.min(0.95, particle.alpha + 0.12)})`;
+        particleContext.lineWidth = Math.max(1.1, particle.width * 0.055);
+        particleContext.fill();
+        particleContext.stroke();
+
+        /* Eine simple Fugen-/Bruchlinie auf jedem Stein. */
+        particleContext.beginPath();
+        particleContext.moveTo(-particle.width * 0.22, -particle.height * 0.05);
+        particleContext.lineTo(particle.width * 0.08, particle.height * 0.13);
+        particleContext.lineTo(particle.width * 0.29, -particle.height * 0.08);
+        particleContext.strokeStyle = `rgba(45, 45, 45, ${particle.alpha * 0.72})`;
+        particleContext.lineWidth = Math.max(0.8, particle.width * 0.025);
+        particleContext.stroke();
+
+        particleContext.restore();
+      }
+    }
+
+    function requestAnimation() {
+      if (frameRequest === null) {
+        previousTime = performance.now();
+        frameRequest = requestAnimationFrame(animate);
+      }
+    }
+
+    function animate(currentTime) {
+      const elapsed = Math.min(50, currentTime - previousTime);
+      previousTime = currentTime;
+
+      const movingForward = targetProgress > progress;
+      const duration = movingForward ? REVEAL_DURATION : RETURN_DURATION;
+      const amount = elapsed / duration;
+
+      if (Math.abs(targetProgress - progress) <= amount) {
+        progress = targetProgress;
+      } else {
+        progress += movingForward ? amount : -amount;
+      }
+
+      progress = Math.max(0, Math.min(1, progress));
+      drawImageOne();
+      spawnParticles(movingForward ? 1 : -1);
+      updateParticles();
+      drawParticles();
+
+      const transitionActive = Math.abs(targetProgress - progress) > 0.0001;
+
+      if (openSelectionWhenReady && progress >= 0.9999) {
+        openSelectionWhenReady = false;
+        openSelectionScreen();
+      }
+
+      if (transitionActive || particles.length > 0) {
+        frameRequest = requestAnimationFrame(animate);
+      } else {
+        frameRequest = null;
+      }
+    }
+
+    async function unlockAudio() {
+      if (audioUnlocked) return true;
+
+      try {
+        musicOne.volume = 0;
+        musicTwo.volume = 0;
+        musicOne.muted = false;
+        musicTwo.muted = false;
+
+        await musicOne.play();
+        await musicTwo.play();
+        await selectionMusic.play();
+
+        audioUnlocked = true;
+        startPermanentAudioMixer();
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    async function tryAutoplay() {
+      const started = await unlockAudio();
+      if (!started) {
+        const unlockOnFirstAction = async () => {
+          const success = await unlockAudio();
+          if (success) {
+            document.removeEventListener("pointerdown", unlockOnFirstAction);
+            document.removeEventListener("keydown", unlockOnFirstAction);
+            document.removeEventListener("touchstart", unlockOnFirstAction);
+          }
+        };
+
+        document.addEventListener("pointerdown", unlockOnFirstAction);
+        document.addEventListener("keydown", unlockOnFirstAction);
+        document.addEventListener("touchstart", unlockOnFirstAction, { passive: true });
+      }
+    }
+
+    /*
+      Der Mixer läuft nach der ersten Freigabe dauerhaft weiter.
+      Beide Titel bleiben permanent gestartet. Es wird niemals pausiert,
+      sondern nur die Lautstärke angepasst. Dadurch ist der Wechsel bei
+      jedem erneuten Hinein- und Herausfahren zuverlässig möglich.
+    */
+    function startPermanentAudioMixer() {
+      if (audioMixerTimer !== null) return;
+
+      audioMixerTimer = window.setInterval(() => {
+        if (!audioUnlocked) return;
+
+        if (musicOne.paused) musicOne.play().catch(() => {});
+        if (musicTwo.paused) musicTwo.play().catch(() => {});
+        if (selectionMusic.paused) selectionMusic.play().catch(() => {});
+        const targetOne = isMuted
+          ? 0
+          : (selectionOpen || selectionTransitioning)
+            ? (selectionOpen ? 0 : MUSIC_MAX_VOLUME)
+            : (gateActive ? 0 : MUSIC_MAX_VOLUME);
+
+        const targetTwo = isMuted
+          ? 0
+          : (selectionOpen || selectionTransitioning)
+            ? 0
+            : (gateActive ? MUSIC_MAX_VOLUME : 0);
+
+        const targetSelection = isMuted
+          ? 0
+          : (selectionOpen && !warenzugOpen && !schauenburgOpen)
+            ? MUSIC_MAX_VOLUME
+            : 0;
+
+        const step = MUSIC_MAX_VOLUME / (MUSIC_FADE_SECONDS * 30);
+
+        musicOne.volume = moveToward(musicOne.volume, targetOne, step);
+        musicTwo.volume = moveToward(musicTwo.volume, targetTwo, step);
+        selectionMusic.volume = moveToward(selectionMusic.volume, targetSelection, step);
+      }, 1000 / 30);
+    }
+
+    function moveToward(current, target, amount) {
+      if (current < target) return Math.min(target, current + amount);
+      if (current > target) return Math.max(target, current - amount);
+      return target;
+    }
+
+    function setGateActive(active) {
+      gateActive = active;
+      targetProgress = active ? 1 : 0;
+      requestAnimation();
+    }
+
+    function updateGateFromPointer(clientX, clientY) {
+      if (selectionOpen || selectionTransitioning) return;
+      lastPointerX = clientX;
+      lastPointerY = clientY;
+      const rectangle = gateHotspot.getBoundingClientRect();
+      const inside =
+        clientX >= rectangle.left && clientX <= rectangle.right &&
+        clientY >= rectangle.top && clientY <= rectangle.bottom;
+
+      if (!openSelectionWhenReady && inside !== gateActive) setGateActive(inside);
+    }
+
+
+    function openSelectionScreen() {
+      if (selectionOpen || selectionTransitioning) return;
+
+      selectionTransitioning = true;
+
+      /* Die Toranimation ist jetzt vollständig unten angekommen. */
+      window.setTimeout(() => {
+        selectionOpen = true;
+        selectionScreen.classList.add("active");
+        selectionScreen.setAttribute("aria-hidden", "false");
+
+        window.setTimeout(() => {
+          selectionTransitioning = false;
+        }, 380);
+      }, 170);
+    }
+
+    function closeSelectionScreen() {
+      if (!selectionOpen || selectionTransitioning) return;
+
+      selectionTransitioning = true;
+
+      /* Hauptbildschirm vollständig geschlossen vorbereiten, bevor der Fade beginnt. */
+      gateActive = false;
+      targetProgress = 0;
+      progress = 0;
+      openSelectionWhenReady = false;
+      particles = [];
+      drawImageOne();
+      drawParticles();
+
+      selectionOpen = false;
+      selectionScreen.classList.remove("active");
+      selectionScreen.setAttribute("aria-hidden", "true");
+
+      window.setTimeout(() => {
+        selectionTransitioning = false;
+      }, 460);
+    }
+
+    gateHotspot.addEventListener("click", async event => {
+      event.preventDefault();
+      if (selectionOpen || selectionTransitioning) return;
+
+      if (!audioUnlocked) await unlockAudio();
+
+      gateActive = true;
+      targetProgress = 1;
+      openSelectionWhenReady = true;
+      requestAnimation();
+
+      if (progress >= 0.9999) {
+        openSelectionWhenReady = false;
+        openSelectionScreen();
+      }
+    });
+
+
+
+    function openRenchHubScreen() {
+      if (
+        renchHubOpen ||
+        renchHubTransitioning ||
+        selectionTransitioning ||
+        warenzugOpen
+      ) return;
+
+      renchHubTransitioning = true;
+      renchHubOpen = true;
+
+      renchWaterTransition.classList.remove("active");
+      void renchWaterTransition.offsetWidth;
+      renchWaterTransition.classList.add("active");
+
+      if (!isMuted && renchWaveSound) {
+        renchWaveSound.pause();
+        renchWaveSound.currentTime = 0;
+        renchWaveSound.volume = 0.46;
+        renchWaveSound.play().catch(() => {});
+      }
+
+      /* Der Szenenwechsel erfolgt unter den überlappenden Wellen. */
+      window.setTimeout(() => {
+        selectionOpen = false;
+        selectionScreen.classList.remove("active");
+        selectionScreen.setAttribute("aria-hidden", "true");
+
+        renchHubScreen.classList.remove("returning-to-selection");
+        renchHubScreen.classList.add("active");
+        renchHubScreen.setAttribute("aria-hidden", "false");
+      }, 1510);
+
+      window.setTimeout(() => {
+        renchWaterTransition.classList.remove("active");
+        renchHubTransitioning = false;
+      }, 3380);
+    }
+
+    function closeRenchHubScreen() {
+      if (!renchHubOpen || renchHubTransitioning) return;
+
+      renchHubTransitioning = true;
+
+      selectionOpen = true;
+            selectionScreen.classList.add("active");
+      selectionScreen.setAttribute("aria-hidden", "false");
+
+      renchHubScreen.classList.add("returning-to-selection");
+
+      window.setTimeout(() => {
+        renchHubOpen = false;
+        renchHubScreen.classList.remove("active", "returning-to-selection");
+        renchHubScreen.setAttribute("aria-hidden", "true");
+        renchHubTransitioning = false;
+      }, 540);
+    }
+
+
+    function openSchauenburgScreen() {
+      if (
+        schauenburgOpen ||
+        schauenburgTransitioning ||
+        selectionTransitioning ||
+        warenzugOpen ||
+        renchHubOpen
+      ) return;
+
+      schauenburgTransitioning = true;
+      schauenburgOpen = true;
+
+      schauenburgTransition.classList.remove("active", "fade-out");
+      void schauenburgTransition.offsetWidth;
+      schauenburgTransition.classList.add("active");
+      schauenburgTransition.setAttribute("aria-hidden", "false");
+
+      if (!isMuted && schauenburgHorn) {
+        schauenburgHorn.pause();
+        schauenburgHorn.currentTime = 0;
+        schauenburgHorn.volume = 1.0;
+        schauenburgHorn.play().catch(() => {});
+      }
+
+      /* Nach der rotierenden Schurkenvorstellung bleibt Friedrich kurz vollkommen stehen. */
+      window.setTimeout(() => {
+        selectionOpen = false;
+        selectionScreen.classList.remove("active");
+        selectionScreen.setAttribute("aria-hidden", "true");
+
+        schauenburgScreen.classList.add("active");
+        schauenburgScreen.setAttribute("aria-hidden", "false");
+      }, 2300);
+
+      window.setTimeout(() => {
+        schauenburgTransition.classList.add("fade-out");
+      }, 2300);
+
+      window.setTimeout(() => {
+        schauenburgTransition.classList.remove("active", "fade-out");
+        schauenburgTransition.setAttribute("aria-hidden", "true");
+        schauenburgTransitioning = false;
+        schauenburgAimX = 0.50;
+        schauenburgAimY = 0.50;
+        updateSchauenburgAim();
+        schauenburgScreen.classList.add("aiming");
+        requestSchauenburgAimFrame();
+        startSchauenburgSiege();
+      }, 2960);
+    }
+
+
+
+    function updateSchauenburgHealth() {
+      const lost = Math.max(0, Math.min(100, 100 - schauenburgHealth));
+      /* Der rote Innenbalken reicht ungefähr über 78.5 % der Grafikbreite. */
+      schauenburgHealthLoss.style.width = `${lost * 0.785}%`;
+    }
+
+    function clearSchauenburgSiege() {
+      schauenburgSpawnTimers.forEach(timer => window.clearTimeout(timer));
+      schauenburgSpawnTimers = [];
+      if (schauenburgWaveTimer !== null) {
+        window.clearTimeout(schauenburgWaveTimer);
+        schauenburgWaveTimer = null;
+      }
+
+      schauenburgEnemies.forEach(enemy => {
+        enemy.cancelled = true;
+        if (enemy.animation) enemy.animation.cancel();
+        if (enemy.element) enemy.element.remove();
+      });
+      schauenburgEnemies.clear();
+
+      if (schauenburgEnemyLayer) schauenburgEnemyLayer.replaceChildren();
+      if (schauenburgEffectLayer) schauenburgEffectLayer.replaceChildren();
+    }
+
+    function startSchauenburgSiege() {
+      clearSchauenburgSiege();
+      schauenburgHealth = 100;
+      schauenburgEnemySequence = 0;
+      updateSchauenburgHealth();
+      scheduleSchauenburgMinute();
+    }
+
+    function createRandomMinuteSpawnTimes() {
+      /*
+        Exakt vier Spawns pro 60 Sekunden, aber bewusst unregelmäßig.
+        Mindestabstand sechs Sekunden; erster Spawn nach wenigen Sekunden.
+      */
+      let times;
+      do {
+        times = Array.from({ length: 4 }, () => 3500 + Math.random() * 52000)
+          .sort((a, b) => a - b);
+      } while (
+        times[0] < 2800 ||
+        times.some((time, index) => index > 0 && time - times[index - 1] < 6000)
+      );
+      return times;
+    }
+
+    function scheduleSchauenburgMinute() {
+      if (!schauenburgOpen || schauenburgTransitioning) return;
+
+      const times = createRandomMinuteSpawnTimes();
+      schauenburgSpawnTimers = times.map(delay =>
+        window.setTimeout(() => {
+          if (schauenburgOpen && !schauenburgTransitioning) spawnSchauenburgEnemy();
+        }, delay)
+      );
+
+      schauenburgWaveTimer = window.setTimeout(() => {
+        schauenburgSpawnTimers = [];
+        scheduleSchauenburgMinute();
+      }, 60000);
+    }
+
+    function spawnSchauenburgEnemy() {
+      if (!schauenburgOpen || schauenburgTransitioning || !schauenburgEnemyLayer) return;
+
+      const type = schauenburgEnemySequence % 2 === 0 ? 1 : 2;
+      schauenburgEnemySequence += 1;
+
+      const id = ++schauenburgEnemyId;
+      const element = document.createElement("img");
+      element.className = "schauenburg-enemy";
+      element.src = type === 1 ? "schauenburg-ritter-1.png" : "schauenburg-ritter-2.png";
+      element.alt = "";
+      element.dataset.enemyId = String(id);
+
+      /*
+        Start unten außerhalb/knapp am Bildrand.
+        Zielpunkte liegen direkt vor der äußersten sichtbaren Mauer.
+        Mehrere leicht verschiedene Wege verhindern starre Überlagerungen.
+      */
+      const routes = [
+        { sx: 0.53, sy: 1.05, tx: 0.57, ty: 0.565 },
+        { sx: 0.62, sy: 1.06, tx: 0.63, ty: 0.545 },
+        { sx: 0.72, sy: 1.05, tx: 0.70, ty: 0.525 },
+        { sx: 0.82, sy: 1.06, tx: 0.77, ty: 0.505 },
+        { sx: 0.91, sy: 1.04, tx: 0.84, ty: 0.485 }
+      ];
+      const route = routes[Math.floor(Math.random() * routes.length)];
+      const duration = 14500 + Math.random() * 5000;
+
+      element.style.left = `${route.sx * 100}%`;
+      element.style.top = `${route.sy * 100}%`;
+      schauenburgEnemyLayer.appendChild(element);
+
+      const enemy = {
+        id,
+        type,
+        element,
+        state: "running",
+        cancelled: false,
+        animation: null,
+        route
+      };
+      schauenburgEnemies.set(id, enemy);
+
+      enemy.animation = element.animate(
+        [
+          {
+            left: `${route.sx * 100}%`,
+            top: `${route.sy * 100}%`,
+            transform: "translate3d(-50%,-100%,0) scale(.82)"
+          },
+          {
+            left: `${route.tx * 100}%`,
+            top: `${route.ty * 100}%`,
+            transform: "translate3d(-50%,-100%,0) scale(1)"
+          }
+        ],
+        {
+          duration,
+          easing: "linear",
+          fill: "forwards"
+        }
+      );
+
+      enemy.animation.addEventListener("finish", () => {
+        if (!enemy.cancelled && enemy.state === "running") {
+          enemyReachedSchauenburgWall(enemy);
+        }
+      }, { once: true });
+    }
+
+    function enemyReachedSchauenburgWall(enemy) {
+      if (!enemy || enemy.state !== "running" || !enemy.element) return;
+
+      enemy.state = "wall";
+      if (enemy.animation) enemy.animation.cancel();
+
+      enemy.element.style.left = `${enemy.route.tx * 100}%`;
+      enemy.element.style.top = `${enemy.route.ty * 100}%`;
+      enemy.element.style.transform = "translate3d(-50%,-100%,0) scale(1)";
+      enemy.element.classList.add("at-wall");
+
+      createSchauenburgDust(enemy.route.tx, enemy.route.ty);
+
+      if (!isMuted && schauenburgPickaxe) {
+        const impact = schauenburgPickaxe.cloneNode();
+        impact.volume = 0.66;
+        impact.play().catch(() => {});
+      }
+
+      schauenburgHealth = Math.max(0, schauenburgHealth - 5);
+      updateSchauenburgHealth();
+
+      window.setTimeout(() => removeSchauenburgEnemy(enemy), 3000);
+    }
+
+    function createSchauenburgDust(x, y) {
+      if (!schauenburgEffectLayer) return;
+
+      const dust = document.createElement("div");
+      dust.className = "schauenburg-dust";
+      dust.style.left = `${x * 100}%`;
+      dust.style.top = `${y * 100}%`;
+      dust.innerHTML = "<i></i><i></i><i></i><i></i><i></i><i></i>";
+      schauenburgEffectLayer.appendChild(dust);
+      window.setTimeout(() => dust.remove(), 1150);
+    }
+
+    function hitSchauenburgEnemy(enemy) {
+      if (!enemy || enemy.state !== "running" || !enemy.element) return;
+
+      enemy.state = "dead";
+      enemy.cancelled = true;
+
+      const screenRect = schauenburgScreen.getBoundingClientRect();
+      const enemyRect = enemy.element.getBoundingClientRect();
+      const centerX = enemyRect.left - screenRect.left + enemyRect.width * 0.5;
+      const bottomY = enemyRect.bottom - screenRect.top;
+
+      if (enemy.animation) enemy.animation.cancel();
+
+      enemy.element.classList.add("dead");
+      enemy.element.src = enemy.type === 1
+        ? "schauenburg-ritter-1-getroffen.png"
+        : "schauenburg-ritter-2-getroffen.png";
+      enemy.element.style.left = `${centerX}px`;
+      enemy.element.style.top = `${bottomY}px`;
+      enemy.element.style.transform = "translate3d(-50%,-74%,0)";
+
+      window.setTimeout(() => removeSchauenburgEnemy(enemy), 5000);
+    }
+
+    function removeSchauenburgEnemy(enemy) {
+      if (!enemy) return;
+      enemy.cancelled = true;
+      if (enemy.animation) enemy.animation.cancel();
+      if (enemy.element) enemy.element.remove();
+      schauenburgEnemies.delete(enemy.id);
+    }
+
+    function arrowHitsSchauenburgEnemy(arrow) {
+      const arrowRect = arrow.getBoundingClientRect();
+      const tipX = arrowRect.right - 3;
+      const tipY = arrowRect.top + arrowRect.height * 0.5;
+
+      for (const enemy of schauenburgEnemies.values()) {
+        if (enemy.state !== "running" || !enemy.element) continue;
+
+        const rect = enemy.element.getBoundingClientRect();
+        const hitLeft = rect.left + rect.width * 0.18;
+        const hitRight = rect.right - rect.width * 0.12;
+        const hitTop = rect.top + rect.height * 0.12;
+        const hitBottom = rect.bottom - rect.height * 0.05;
+
+        if (
+          tipX >= hitLeft &&
+          tipX <= hitRight &&
+          tipY >= hitTop &&
+          tipY <= hitBottom
+        ) {
+          hitSchauenburgEnemy(enemy);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function updateSchauenburgAim() {
+      if (!schauenburgAim) return;
+      schauenburgAim.style.left = `${schauenburgAimX * 100}%`;
+      schauenburgAim.style.top = `${schauenburgAimY * 100}%`;
+    }
+
+    function requestSchauenburgAimFrame() {
+      if (schauenburgAimFrame === null) {
+        schauenburgPreviousTime = performance.now();
+        schauenburgAimFrame = requestAnimationFrame(updateSchauenburgAimFrame);
+      }
+    }
+
+    function updateSchauenburgAimFrame(currentTime) {
+      const delta = Math.min(0.04, (currentTime - schauenburgPreviousTime) / 1000);
+      schauenburgPreviousTime = currentTime;
+
+      if (!schauenburgOpen || schauenburgTransitioning) {
+        schauenburgAimFrame = null;
+        return;
+      }
+
+      const speed = 0.44;
+      if (schauenburgKeys.has("KeyA")) schauenburgAimX -= speed * delta;
+      if (schauenburgKeys.has("KeyD")) schauenburgAimX += speed * delta;
+      if (schauenburgKeys.has("KeyW")) schauenburgAimY -= speed * delta;
+      if (schauenburgKeys.has("KeyS")) schauenburgAimY += speed * delta;
+
+      schauenburgAimX = Math.max(0.035, Math.min(0.965, schauenburgAimX));
+      schauenburgAimY = Math.max(0.05, Math.min(0.95, schauenburgAimY));
+      updateSchauenburgAim();
+
+      schauenburgAimFrame = requestAnimationFrame(updateSchauenburgAimFrame);
+    }
+
+    function fireSchauenburgArrow() {
+      if (!schauenburgOpen || schauenburgTransitioning) return;
+
+      if (!isMuted && schauenburgBow) {
+        const shotSound = schauenburgBow.cloneNode();
+        shotSound.volume = 0.62;
+        shotSound.play().catch(() => {});
+      }
+
+      const rect = schauenburgScreen.getBoundingClientRect();
+
+      /*
+        Abschusspunkte liegen ausschließlich oben mittig in der Kernburg
+        und auf den sichtbaren Türmen. Bei jedem Schuss wird einer dieser
+        festen Punkte gewählt.
+      */
+      const towerOrigins = [
+        { x: 0.46, y: 0.18 },
+        { x: 0.52, y: 0.13 },
+        { x: 0.58, y: 0.16 },
+        { x: 0.63, y: 0.20 },
+        { x: 0.69, y: 0.23 }
+      ];
+      const origin = towerOrigins[Math.floor(Math.random() * towerOrigins.length)];
+      const startX = rect.width * origin.x;
+      const startY = rect.height * origin.y;
+      const targetX = rect.width * schauenburgAimX;
+      const targetY = rect.height * schauenburgAimY;
+      const dx = targetX - startX;
+      const dy = targetY - startY;
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+      const arrow = document.createElement("div");
+      arrow.className = "schauenburg-arrow";
+      arrow.innerHTML = '<span class="schauenburg-arrow-tail"></span>';
+      arrow.style.left = `${startX}px`;
+      arrow.style.top = `${startY}px`;
+      arrow.style.transform = `translate3d(0,0,0) rotate(${angle}deg)`;
+      schauenburgScreen.appendChild(arrow);
+
+      const animation = arrow.animate(
+        [
+          { transform: `translate3d(0,0,0) rotate(${angle}deg)`, opacity: 1 },
+          { transform: `translate3d(${dx}px,${dy}px,0) rotate(${angle}deg)`, opacity: 1, offset: 0.82 },
+          { transform: `translate3d(${dx}px,${dy}px,0) rotate(${angle}deg)`, opacity: 0 }
+        ],
+        {
+          duration: 500,
+          easing: "cubic-bezier(.18,.72,.24,1)",
+          fill: "forwards"
+        }
+      );
+
+      let arrowCollisionFrame = null;
+      const monitorArrowCollision = () => {
+        if (!arrow.isConnected) return;
+        if (arrowHitsSchauenburgEnemy(arrow)) {
+          animation.cancel();
+          arrow.remove();
+          return;
+        }
+        arrowCollisionFrame = requestAnimationFrame(monitorArrowCollision);
+      };
+      arrowCollisionFrame = requestAnimationFrame(monitorArrowCollision);
+
+      animation.addEventListener("finish", () => {
+        if (arrowCollisionFrame !== null) cancelAnimationFrame(arrowCollisionFrame);
+        arrow.remove();
+      }, { once: true });
+
+      window.setTimeout(() => {
+        if (arrowCollisionFrame !== null) cancelAnimationFrame(arrowCollisionFrame);
+        arrow.remove();
+      }, 700);
+    }
+
+    function closeSchauenburgScreen() {
+      if (!schauenburgOpen || schauenburgTransitioning) return;
+
+      schauenburgTransitioning = true;
+      schauenburgKeys.clear();
+      clearSchauenburgSiege();
+      schauenburgScreen.classList.remove("aiming");
+
+      selectionOpen = true;
+      selectionScreen.classList.add("active");
+      selectionScreen.setAttribute("aria-hidden", "false");
+
+      schauenburgScreen.classList.remove("active");
+      schauenburgScreen.setAttribute("aria-hidden", "true");
+
+      window.setTimeout(() => {
+        schauenburgOpen = false;
+        schauenburgTransitioning = false;
+      }, 640);
+    }
+
+    function openWarenzugScreen() {
+      if (warenzugOpen || selectionTransitioning) return;
+
+      selectionTransitioning = true;
+      warenzugOpen = true;
+
+      /* Neue Szene liegt bereits bereit, während die Auswahl weich ausblendet. */
+      warenzugScreen.classList.add("active");
+      warenzugScreen.setAttribute("aria-hidden", "false");
+      selectionScreen.classList.remove("active");
+      selectionScreen.setAttribute("aria-hidden", "true");
+
+      playerX = 0.10;
+      playerY = 0;
+      playerVelocityY = 0;
+      playerFacing = 1;
+      playerGrounded = true;
+      gameKeys.clear();
+      resetSpaceAction();
+      updatePlayerVisual();
+      requestGameFrame();
+
+      window.setTimeout(() => {
+        selectionOpen = false;
+        selectionTransitioning = false;
+      }, 460);
+    }
+
+    function requestGameFrame() {
+      if (gameFrameRequest === null) {
+        gamePreviousTime = performance.now();
+        gameFrameRequest = requestAnimationFrame(updateGame);
+      }
+    }
+
+    function updateGame(currentTime) {
+      const delta = Math.min(0.034, (currentTime - gamePreviousTime) / 1000);
+      gamePreviousTime = currentTime;
+
+      if (!warenzugOpen) {
+        gameFrameRequest = null;
+        return;
+      }
+
+      const movingLeft = !spaceHeld && !maceGroundState && gameKeys.has("KeyA");
+      const movingRight = !spaceHeld && !maceGroundState && gameKeys.has("KeyD");
+      const ducking = !spaceHeld && !maceGroundState && gameKeys.has("KeyS") && playerGrounded;
+      const horizontalDirection = (movingRight ? 1 : 0) - (movingLeft ? 1 : 0);
+
+      if (!ducking && horizontalDirection !== 0) {
+        const movementSpeed = 0.235;
+        playerX += horizontalDirection * movementSpeed * delta;
+        playerFacing = horizontalDirection;
+      }
+
+      const playerWidthRatio = joergPlayer.offsetWidth / Math.max(1, warenzugWorld.clientWidth);
+      playerX = Math.max(0.015, Math.min(0.985 - playerWidthRatio, playerX));
+
+      if (!playerGrounded) {
+        const gravity = 2.25;
+        playerVelocityY -= gravity * delta;
+        playerY += playerVelocityY * delta;
+
+        if (playerY <= 0) {
+          playerY = 0;
+          playerVelocityY = 0;
+          playerGrounded = true;
+        }
+      }
+
+      joergPlayer.classList.toggle("ducking", ducking && !playerAttacking);
+      updatePlayerVisual();
+
+      gameFrameRequest = requestAnimationFrame(updateGame);
+    }
+
+    function updatePlayerVisual() {
+      const left = `${playerX * 100}%`;
+      const bottom = `calc(24.8% + ${playerY * 100}%)`;
+
+      joergPlayer.style.left = left;
+      joergPlayer.style.bottom = bottom;
+      joergHoldPlayer.style.left = left;
+      joergHoldPlayer.style.bottom = bottom;
+      joergGroundPlayer.style.left = `calc(${playerX * 100}% - 0.85%)`;
+      joergGroundPlayer.style.bottom = `calc(22.8% + ${playerY * 100}%)`;
+
+      joergPlayer.classList.toggle("facing-left", playerFacing < 0);
+      joergHoldPlayer.classList.toggle("facing-left", playerFacing < 0);
+      joergGroundPlayer.classList.toggle("facing-left", playerFacing < 0);
+    }
+
+
+    function resetSpaceAction() {
+      if (spaceHoldTimer !== null) {
+        clearTimeout(spaceHoldTimer);
+        spaceHoldTimer = null;
+      }
+
+      spacePressed = false;
+      spaceHeld = false;
+      maceGroundState = false;
+      playerAttacking = false;
+
+      joergHoldPlayer.classList.remove("visible");
+      joergGroundPlayer.classList.remove("visible");
+      joergPlayer.classList.remove("hidden-for-hold", "attacking");
+    }
+
+    function startSpaceAction() {
+      if (!warenzugOpen) return;
+
+      if (maceGroundState) {
+        maceGroundState = false;
+        playerAttacking = false;
+        joergGroundPlayer.classList.remove("visible");
+        joergPlayer.classList.remove("hidden-for-hold");
+        updatePlayerVisual();
+        return;
+      }
+
+      if (
+        spacePressed ||
+        !playerGrounded ||
+        gameKeys.has("KeyS") ||
+        playerAttacking
+      ) return;
+
+      spacePressed = true;
+      spaceHeld = false;
+
+      spaceHoldTimer = window.setTimeout(() => {
+        if (!spacePressed || !warenzugOpen) return;
+
+        spaceHeld = true;
+        playerAttacking = true;
+        gameKeys.delete("KeyA");
+        gameKeys.delete("KeyD");
+        gameKeys.delete("KeyW");
+        gameKeys.delete("KeyS");
+
+        joergPlayer.classList.remove("ducking", "attacking");
+        joergPlayer.classList.add("hidden-for-hold");
+        joergHoldPlayer.classList.add("visible");
+        updatePlayerVisual();
+      }, SPACE_HOLD_DELAY);
+    }
+
+    function finishSpaceAction() {
+      if (!spacePressed) return;
+
+      if (spaceHoldTimer !== null) {
+        clearTimeout(spaceHoldTimer);
+        spaceHoldTimer = null;
+      }
+
+      const wasHeld = spaceHeld;
+
+      spacePressed = false;
+      spaceHeld = false;
+
+      if (wasHeld) {
+        joergHoldPlayer.classList.remove("visible");
+        joergGroundPlayer.classList.add("visible");
+        joergPlayer.classList.add("hidden-for-hold");
+
+        maceGroundState = true;
+        playerAttacking = true;
+        updatePlayerVisual();
+        return;
+      }
+
+      strikeWithMace();
+    }
+
+    function jumpPlayer() {
+      if (!warenzugOpen || !playerGrounded || gameKeys.has("KeyS") || spaceHeld || spacePressed || maceGroundState) return;
+      playerGrounded = false;
+      playerVelocityY = 0.82;
+      requestGameFrame();
+    }
+
+    function strikeWithMace() {
+      if (!warenzugOpen || playerAttacking) return;
+
+      playerAttacking = true;
+      joergPlayer.classList.remove("ducking");
+      joergPlayer.classList.add("attacking");
+
+      window.setTimeout(() => {
+        joergPlayer.classList.remove("attacking");
+        playerAttacking = false;
+      }, 320);
+    }
+
+    titleHotspotOne.addEventListener("click", event => {
+      event.preventDefault();
+      openRenchHubScreen();
+    });
+
+    titleHotspotTwo.addEventListener("click", event => {
+      event.preventDefault();
+      openWarenzugScreen();
+    });
+
+    titleHotspotThree.addEventListener("click", event => {
+      event.preventDefault();
+      openSchauenburgScreen();
+    });
+
+
+    schauenburgBackFlag.addEventListener("mouseenter", () => {
+      if (!schauenburgOpen || schauenburgTransitioning || !schauenburgChickenReady) return;
+      schauenburgChickenReady = false;
+      if (!isMuted && schauenburgChicken) {
+        schauenburgChicken.pause();
+        schauenburgChicken.currentTime = 0;
+        schauenburgChicken.volume = 0.52;
+        schauenburgChicken.play().catch(() => {});
+      }
+    });
+
+    schauenburgBackFlag.addEventListener("mouseleave", () => {
+      schauenburgChickenReady = true;
+    });
+
+    schauenburgBackFlag.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeSchauenburgScreen();
+    });
+
+    window.addEventListener("keydown", event => {
+      if (!schauenburgOpen || schauenburgTransitioning) return;
+
+      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space"].includes(event.code)) {
+        event.preventDefault();
+      }
+
+      if (["KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) {
+        schauenburgKeys.add(event.code);
+        requestSchauenburgAimFrame();
+      }
+
+      if (event.code === "Space" && !event.repeat) {
+        fireSchauenburgArrow();
+      }
+    });
+
+    window.addEventListener("keyup", event => {
+      if (["KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) {
+        schauenburgKeys.delete(event.code);
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (!warenzugOpen) return;
+
+      if (["KeyA", "KeyD", "KeyW", "KeyS", "Space"].includes(event.code)) {
+        event.preventDefault();
+      }
+
+      if (event.code === "KeyW" && !event.repeat) {
+        jumpPlayer();
+      }
+
+      if (event.code === "Space") {
+        if (!event.repeat) startSpaceAction();
+        return;
+      }
+
+      if (!spaceHeld && !maceGroundState) gameKeys.add(event.code);
+      requestGameFrame();
+    });
+
+    document.addEventListener("keyup", event => {
+      if (!warenzugOpen) return;
+
+      if (event.code === "Space") {
+        event.preventDefault();
+        finishSpaceAction();
+        return;
+      }
+
+      gameKeys.delete(event.code);
+    });
+
+    window.addEventListener("blur", () => {
+      if (warenzugOpen) {
+        gameKeys.clear();
+        resetSpaceAction();
+      }
+    });
+
+
+    function closeWarenzugScreen() {
+      if (!warenzugOpen || selectionTransitioning) return;
+
+      selectionTransitioning = true;
+
+      /* Steuerung und Spielfigur vor dem Übergang sauber zurücksetzen. */
+      warenzugOpen = false;
+      gameKeys.clear();
+      playerX = 0.10;
+      playerY = 0;
+      playerVelocityY = 0;
+      playerFacing = 1;
+      playerGrounded = true;
+      playerAttacking = false;
+      resetSpaceAction();
+      joergPlayer.classList.remove("ducking", "attacking", "hidden-for-hold", "facing-left");
+      joergHoldPlayer.classList.remove("visible", "facing-left");
+      joergGroundPlayer.classList.remove("visible", "facing-left");
+      updatePlayerVisual();
+
+      /* Auswahlbildschirm bereits vollständig vorbereiten. */
+      selectionOpen = true;
+      selectionScreen.classList.add("active");
+      selectionScreen.setAttribute("aria-hidden", "false");
+
+      /* Danach Spielszene weich ausblenden. */
+      requestAnimationFrame(() => {
+        warenzugScreen.classList.remove("active");
+        warenzugScreen.setAttribute("aria-hidden", "true");
+      });
+
+      window.setTimeout(() => {
+        selectionTransitioning = false;
+      }, 460);
+    }
+
+    gameReturnHotspot.addEventListener("pointerenter", () => playEffect(gateSound));
+    gameReturnHotspot.addEventListener("focus", () => playEffect(gateSound));
+
+    gameReturnHotspot.addEventListener("click", event => {
+      event.preventDefault();
+      closeWarenzugScreen();
+    });
+
+    function playEffect(audioElement) {
+      if (isMuted || !audioElement) return;
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      audioElement.volume = 0.62;
+      audioElement.play().catch(() => {});
+    }
+
+    for (const hotspot of titleHotspots) {
+      hotspot.addEventListener("pointerenter", () => playEffect(swordClang));
+      hotspot.addEventListener("focus", () => playEffect(swordClang));
+    }
+
+    for (const hotspot of renchCharacterHotspots) {
+      hotspot.addEventListener("pointerenter", () => playEffect(swordClang));
+      hotspot.addEventListener("focus", () => playEffect(swordClang));
+    }
+
+    renchBackButton.addEventListener("click", event => {
+      event.preventDefault();
+      closeRenchHubScreen();
+    });
+
+    returnHotspot.addEventListener("pointerenter", () => playEffect(gateSound));
+    returnHotspot.addEventListener("focus", () => playEffect(gateSound));
+
+    returnHotspot.addEventListener("click", event => {
+      event.preventDefault();
+      closeSelectionScreen();
+    });
+
+    /* Globales Tracking verhindert, dass ein Hover-Wechsel verloren geht. */
+    document.addEventListener("pointermove", event => {
+      updateGateFromPointer(event.clientX, event.clientY);
+    }, { passive: true });
+
+    document.addEventListener("pointerleave", () => {
+      if (!openSelectionWhenReady && !selectionOpen && !selectionTransitioning) setGateActive(false);
+    });
+    window.addEventListener("blur", () => {
+      if (!openSelectionWhenReady && !selectionOpen && !selectionTransitioning) setGateActive(false);
+    });
+
+    muteButton.addEventListener("click", async () => {
+      if (!audioUnlocked) await unlockAudio();
+      isMuted = !isMuted;
+      muteButton.classList.toggle("muted", isMuted);
+      muteButton.setAttribute("aria-label", isMuted ? "Musik einschalten" : "Musik stummschalten");
+      muteButton.setAttribute("title", isMuted ? "Musik einschalten" : "Musik stummschalten");
+      startPermanentAudioMixer();
+    });
+
+    imageOne.addEventListener("load", resizeCanvases);
+    window.addEventListener("resize", () => {
+      resizeCanvases();
+      if (lastPointerX >= 0) updateGateFromPointer(lastPointerX, lastPointerY);
+    });
+
+    if (imageOne.complete) resizeCanvases();
+    tryAutoplay();
+  </script>
+</body>
+</html>
