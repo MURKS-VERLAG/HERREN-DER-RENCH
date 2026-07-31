@@ -1136,7 +1136,7 @@
       position: absolute;
       z-index: 11;
       left: 50%;
-      top: -7.2%;
+      top: -11.5%;
       width: min(64vw, 760px);
       transform: translateX(-50%);
       pointer-events: none;
@@ -2043,11 +2043,11 @@
       */
       let times;
       do {
-        times = Array.from({ length: 10 }, () => 2500 + Math.random() * 54500)
+        times = Array.from({ length: 30 }, () => 1200 + Math.random() * 58800)
           .sort((a, b) => a - b);
       } while (
         times[0] < 2800 ||
-        times.some((time, index) => index > 0 && time - times[index - 1] < 2800)
+        times.some((time, index) => index > 0 && time - times[index - 1] < 900)
       );
       return times;
     }
