@@ -1162,48 +1162,55 @@
     }
 
 
-    /* Phase-1-Testkasten: ganz oben links, simpel mittelalterlich, weinrot. */
+    /* Friedrich-Bock-Minispiel: ausschließlich das Motiv oben links. */
     #friedrichBockEventBox {
       position: absolute;
       z-index: 12;
-      left: 0.7%;
-      top: 0.7%;
-      width: clamp(210px, 27vw, 430px);
-      height: clamp(125px, 20vh, 250px);
+      left: 0;
+      top: 0;
+      width: clamp(205px, 25vw, 405px);
+      aspect-ratio: 2 / 3;
       display: none;
       pointer-events: none;
-      background:
-        linear-gradient(rgba(28, 7, 12, .92), rgba(18, 4, 8, .95));
-      border: clamp(4px, .45vw, 7px) double #6f1027;
-      outline: 2px solid rgba(201, 160, 116, .78);
-      box-shadow:
-        inset 0 0 0 3px rgba(33, 4, 10, .96),
-        inset 0 0 18px rgba(0,0,0,.68),
-        0 5px 18px rgba(0,0,0,.58);
+      user-select: none;
+      overflow: visible;
     }
-
-    #friedrichBockEventBox::before,
-    #friedrichBockEventBox::after {
-      content: "✦";
-      position: absolute;
-      top: 50%;
-      width: clamp(23px, 2.2vw, 34px);
-      height: clamp(23px, 2.2vw, 34px);
-      display: grid;
-      place-items: center;
-      background: #7a122b;
-      border: 2px solid #c9a074;
-      color: #f0dfc1;
-      font-size: clamp(14px, 1.35vw, 22px);
-      transform: translateY(-50%) rotate(45deg);
-      box-shadow: 0 0 0 2px #2b0710;
-    }
-
-    #friedrichBockEventBox::before { left: clamp(-15px, -1.1vw, -10px); }
-    #friedrichBockEventBox::after  { right: clamp(-15px, -1.1vw, -10px); }
 
     #friedrichBockEventBox.visible {
       display: block;
+    }
+
+    #friedrichBockMinigameImage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,.48));
+    }
+
+    #friedrichBockMinigameLetter {
+      position: absolute;
+      z-index: 2;
+      left: 50%;
+      top: 12.5%;
+      transform: translateX(-50%);
+      color: #86142a;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(48px, 7.2vw, 112px);
+      font-weight: 900;
+      line-height: 1;
+      text-shadow:
+        0 2px 0 rgba(255,235,205,.70),
+        0 0 4px rgba(0,0,0,.82);
+      pointer-events: none;
+    }
+
+    #friedrichBockEventBox.feedback #friedrichBockMinigameLetter {
+      opacity: 0;
     }
 
     /* BELAGERUNG V1: ausschließlich innerhalb von #schauenburgScreen. */
@@ -1695,7 +1702,10 @@
     <img id="schauenburgOverview" src="schauenburg-belagerung.png" alt="Belagerung der Schauenburg 1432">
     <img id="friedrichSchreiber" src="friedrich-schreiber.png" alt="" aria-hidden="true">
     <img id="friedrichBockEventRider" src="friedrich-bock-event.png" alt="" aria-hidden="true">
-    <div id="friedrichBockEventBox" aria-hidden="true"></div>
+    <div id="friedrichBockEventBox" aria-hidden="true">
+      <img id="friedrichBockMinigameImage" src="friedrich-bock-tuer-grund.png" alt="">
+      <span id="friedrichBockMinigameLetter">B</span>
+    </div>
 
     <div id="schauenburgHealth" aria-label="Lebensleiste der Schauenburg">
       <div id="schauenburgHealthLoss"></div>
@@ -1721,6 +1731,10 @@
     <audio id="schauenburgCannonSound" src="kanonenschlag.wav" preload="auto"></audio>
     <audio id="friedrichBockArrivalSound" src="friedrich-bock-erscheint.mp3" preload="auto"></audio>
     <audio id="friedrichBockTargetSound" src="friedrich-bock-ziel-v2.wav" preload="auto"></audio>
+    <audio id="friedrichBockPainSound" src="friedrich-bock-daumen.wav" preload="auto"></audio>
+    <audio id="friedrichBockHammerOne" src="friedrich-bock-hammer-1.wav" preload="auto"></audio>
+    <audio id="friedrichBockHammerTwo" src="friedrich-bock-hammer-2.wav" preload="auto"></audio>
+    <audio id="friedrichBockHammerThree" src="friedrich-bock-hammer-3.wav" preload="auto"></audio>
   </section>
 
   <section id="warenzugScreen" aria-label="Der Straßburger Warenzug" aria-hidden="true">
@@ -1792,8 +1806,16 @@
     const friedrichSchreiber = document.getElementById("friedrichSchreiber");
     const friedrichBockEventRider = document.getElementById("friedrichBockEventRider");
     const friedrichBockEventBox = document.getElementById("friedrichBockEventBox");
+    const friedrichBockMinigameImage = document.getElementById("friedrichBockMinigameImage");
+    const friedrichBockMinigameLetter = document.getElementById("friedrichBockMinigameLetter");
     const friedrichBockArrivalSound = document.getElementById("friedrichBockArrivalSound");
     const friedrichBockTargetSound = document.getElementById("friedrichBockTargetSound");
+    const friedrichBockPainSound = document.getElementById("friedrichBockPainSound");
+    const friedrichBockHammerSounds = [
+      document.getElementById("friedrichBockHammerOne"),
+      document.getElementById("friedrichBockHammerTwo"),
+      document.getElementById("friedrichBockHammerThree")
+    ];
 
     const imageContext = imageCanvas.getContext("2d");
     const particleContext = particleCanvas.getContext("2d");
@@ -1842,6 +1864,11 @@
     let friedrichBockEventAnimation = null;
     let friedrichBockEventEndTimer = null;
     let friedrichBockEventActive = false;
+    let friedrichBockMinigameActive = false;
+    let friedrichBockMinigameLocked = false;
+    let friedrichBockMinigameIndex = 0;
+    let friedrichBockMinigameResetTimer = null;
+    const FRIEDRICH_BOCK_WORD = "BOCK";
     const schauenburgEnemies = new Map();
     let gameFrameRequest = null;
     let gamePreviousTime = performance.now();
@@ -2483,6 +2510,186 @@
 
 
 
+
+    function startFriedrichBockMinigame() {
+      friedrichBockMinigameActive = true;
+      friedrichBockMinigameLocked = false;
+      friedrichBockMinigameIndex = 0;
+
+      if (friedrichBockMinigameResetTimer !== null) {
+        window.clearTimeout(friedrichBockMinigameResetTimer);
+        friedrichBockMinigameResetTimer = null;
+      }
+
+      if (friedrichBockEventBox) {
+        friedrichBockEventBox.classList.remove("feedback");
+        friedrichBockEventBox.classList.add("visible");
+      }
+
+      if (friedrichBockMinigameImage) {
+        friedrichBockMinigameImage.src = "friedrich-bock-tuer-grund.png";
+      }
+
+      updateFriedrichBockMinigameLetter();
+    }
+
+    function updateFriedrichBockMinigameLetter() {
+      if (!friedrichBockMinigameLetter) return;
+      friedrichBockMinigameLetter.textContent =
+        FRIEDRICH_BOCK_WORD[friedrichBockMinigameIndex] || "";
+    }
+
+    function playFriedrichBockOneShot(audioElement, volume = 0.9) {
+      if (isMuted || !audioElement) return;
+      const sound = audioElement.cloneNode();
+      sound.volume = volume;
+      sound.play().catch(() => {});
+    }
+
+    function handleFriedrichBockMinigameKey(event) {
+      if (
+        !friedrichBockEventActive ||
+        !friedrichBockMinigameActive ||
+        friedrichBockMinigameLocked ||
+        event.repeat
+      ) return false;
+
+      /*
+        Während des Minispiels zählt jede druckbare Buchstabentaste.
+        Die erwartete Folge lautet ausschließlich B-O-C-K.
+      */
+      if (!event.code.startsWith("Key")) return false;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      const pressedLetter = event.code.slice(3).toUpperCase();
+      const expectedLetter = FRIEDRICH_BOCK_WORD[friedrichBockMinigameIndex];
+
+      if (pressedLetter === expectedLetter) {
+        handleCorrectFriedrichBockMinigameKey();
+      } else {
+        handleWrongFriedrichBockMinigameKey();
+      }
+
+      return true;
+    }
+
+    function handleCorrectFriedrichBockMinigameKey() {
+      friedrichBockMinigameLocked = true;
+
+      if (friedrichBockEventBox) {
+        friedrichBockEventBox.classList.add("feedback");
+      }
+
+      if (friedrichBockMinigameImage) {
+        friedrichBockMinigameImage.src = "friedrich-bock-tuer-richtig.png";
+      }
+
+      const validHammerSounds = friedrichBockHammerSounds.filter(Boolean);
+      if (validHammerSounds.length > 0) {
+        const selectedSound =
+          validHammerSounds[Math.floor(Math.random() * validHammerSounds.length)];
+        playFriedrichBockOneShot(selectedSound, 0.86);
+      }
+
+      friedrichBockMinigameIndex += 1;
+
+      if (friedrichBockMinigameIndex >= FRIEDRICH_BOCK_WORD.length) {
+        friedrichBockMinigameResetTimer = window.setTimeout(() => {
+          friedrichBockMinigameResetTimer = null;
+          completeFriedrichBockMinigame();
+        }, 210);
+        return;
+      }
+
+      friedrichBockMinigameResetTimer = window.setTimeout(() => {
+        friedrichBockMinigameResetTimer = null;
+        if (!friedrichBockEventActive || !friedrichBockMinigameActive) return;
+
+        friedrichBockMinigameLocked = false;
+
+        if (friedrichBockEventBox) {
+          friedrichBockEventBox.classList.remove("feedback");
+        }
+
+        if (friedrichBockMinigameImage) {
+          friedrichBockMinigameImage.src = "friedrich-bock-tuer-grund.png";
+        }
+
+        updateFriedrichBockMinigameLetter();
+      }, 210);
+    }
+
+    function handleWrongFriedrichBockMinigameKey() {
+      friedrichBockMinigameLocked = true;
+
+      if (friedrichBockEventBox) {
+        friedrichBockEventBox.classList.add("feedback");
+      }
+
+      if (friedrichBockMinigameImage) {
+        friedrichBockMinigameImage.src = "friedrich-bock-tuer-fehler.png";
+      }
+
+      playFriedrichBockOneShot(friedrichBockPainSound, 0.96);
+
+      /*
+        Falsche Eingabe verändert den aktuellen Buchstaben nicht.
+        Exakt zwei Sekunden lang sind weitere Eingaben gesperrt.
+      */
+      friedrichBockMinigameResetTimer = window.setTimeout(() => {
+        friedrichBockMinigameResetTimer = null;
+        if (!friedrichBockEventActive || !friedrichBockMinigameActive) return;
+
+        friedrichBockMinigameLocked = false;
+
+        if (friedrichBockEventBox) {
+          friedrichBockEventBox.classList.remove("feedback");
+        }
+
+        if (friedrichBockMinigameImage) {
+          friedrichBockMinigameImage.src = "friedrich-bock-tuer-grund.png";
+        }
+
+        updateFriedrichBockMinigameLetter();
+      }, 2000);
+    }
+
+    function completeFriedrichBockMinigame() {
+      if (!friedrichBockEventActive || !friedrichBockMinigameActive) return;
+
+      stopFriedrichBockMinigame();
+
+      /*
+        BOCK wurde korrekt eingegeben:
+        Friedrich verschwindet sofort auf der Route.
+        Der Zielsound darf hierbei ausdrücklich nicht abgespielt werden.
+      */
+      finishFriedrichBockEvent();
+    }
+
+    function stopFriedrichBockMinigame() {
+      friedrichBockMinigameActive = false;
+      friedrichBockMinigameLocked = false;
+      friedrichBockMinigameIndex = 0;
+
+      if (friedrichBockMinigameResetTimer !== null) {
+        window.clearTimeout(friedrichBockMinigameResetTimer);
+        friedrichBockMinigameResetTimer = null;
+      }
+
+      if (friedrichBockEventBox) {
+        friedrichBockEventBox.classList.remove("visible", "feedback");
+      }
+
+      if (friedrichBockMinigameImage) {
+        friedrichBockMinigameImage.src = "friedrich-bock-tuer-grund.png";
+      }
+
+      updateFriedrichBockMinigameLetter();
+    }
+
     function scheduleNextFriedrichBockEvent() {
       if (friedrichBockEventTimer !== null) {
         window.clearTimeout(friedrichBockEventTimer);
@@ -2510,9 +2717,7 @@
 
       friedrichBockEventActive = true;
 
-      if (friedrichBockEventBox) {
-        friedrichBockEventBox.classList.add("visible");
-      }
+      startFriedrichBockMinigame();
 
       /* Schreiber während des gesamten Ereignisses exakt auf Anhang 4 wechseln. */
       friedrichSchreiber.classList.add("friedrich-event-switching");
@@ -2596,6 +2801,8 @@
         friedrichBockEventRider.style.transform =
           "translate3d(-50%,-100%,0) scale(1)";
 
+        stopFriedrichBockMinigame();
+
         /* Anhang 2: genau einmal beim tatsächlichen Erreichen des Ziels. */
         if (!isMuted && friedrichBockTargetSound) {
           const targetSound = friedrichBockTargetSound.cloneNode();
@@ -2621,12 +2828,10 @@
         friedrichBockEventAnimation = null;
       }
 
+      stopFriedrichBockMinigame();
+
       friedrichBockEventRider.classList.remove("visible");
       friedrichBockEventRider.removeAttribute("style");
-
-      if (friedrichBockEventBox) {
-        friedrichBockEventBox.classList.remove("visible");
-      }
 
       /* Nach dem Ereignis wieder den bisherigen normalen Schreiber herstellen. */
       friedrichSchreiber.classList.add("friedrich-event-switching");
@@ -2655,14 +2860,11 @@
       }
 
       friedrichBockEventActive = false;
+      stopFriedrichBockMinigame();
 
       if (friedrichBockEventRider) {
         friedrichBockEventRider.classList.remove("visible");
         friedrichBockEventRider.removeAttribute("style");
-      }
-
-      if (friedrichBockEventBox) {
-        friedrichBockEventBox.classList.remove("visible");
       }
 
       if (friedrichSchreiber) {
@@ -3699,6 +3901,10 @@
       event.stopPropagation();
       closeSchauenburgScreen();
     });
+
+    window.addEventListener("keydown", event => {
+      handleFriedrichBockMinigameKey(event);
+    }, true);
 
     window.addEventListener("keydown", event => {
       if (!schauenburgOpen || schauenburgTransitioning) return;
