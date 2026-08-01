@@ -1540,6 +1540,175 @@
 
     #schauenburgSpearmanDefender.visible { display: block; }
 
+
+    /* Kompakte Verteidigerauswahl am unteren Bildrand, mittig und leicht links. */
+    #schauenburgDefenseShopBar {
+      position: absolute;
+      z-index: 14;
+      left: 46%;
+      bottom: 0.7%;
+      width: min(58vw, 810px);
+      min-height: clamp(82px, 11vw, 155px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: clamp(6px, .8vw, 14px);
+      transform: translateX(-50%);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+
+    #schauenburgScreen.active #schauenburgDefenseShopBar { opacity: 1; }
+
+    #schauenburgCrossbowShop,
+    #schauenburgSpearmanShop,
+    #schauenburgBuilderShop {
+      position: relative;
+      inset: auto;
+      width: auto;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: clamp(3px, .35vw, 6px);
+      opacity: 1;
+      transition: none;
+      flex: 0 0 auto;
+    }
+
+    #schauenburgScreen.active #schauenburgCrossbowShop,
+    #schauenburgScreen.active #schauenburgSpearmanShop,
+    #schauenburgScreen.active #schauenburgBuilderShop {
+      opacity: 1;
+    }
+
+    #schauenburgCrossbowUnitWrap,
+    #schauenburgSpearmanUnitWrap,
+    #schauenburgBuilderUnitWrap {
+      width: clamp(48px, 5.5vw, 89px);
+      height: clamp(70px, 8.7vw, 137px);
+    }
+
+    #schauenburgCrossbowUnit,
+    #schauenburgSpearmanUnit,
+    #schauenburgBuilderUnit {
+      object-position: center bottom;
+    }
+
+    #schauenburgBuilderKey {
+      width: clamp(27px, 2.6vw, 42px);
+      height: clamp(27px, 2.6vw, 42px);
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 2px solid rgba(225,220,205,.92);
+      outline: 2px solid rgba(20,20,18,.96);
+      background: rgba(12,12,11,.86);
+      color: #f3efe2;
+      font: 800 clamp(18px, 2vw, 31px)/1 Georgia, serif;
+      box-shadow: 0 3px 8px rgba(0,0,0,.72);
+    }
+
+    #schauenburgBuilderCosts,
+    #schauenburgBuilderRepairCosts {
+      display: grid;
+      gap: 3px;
+      flex: 0 0 auto;
+      color: #f3efe2;
+      font: 800 clamp(15px, 1.55vw, 25px)/1 Georgia, serif;
+      text-shadow: 0 2px 2px #000, 0 0 5px #000;
+    }
+
+    .schauenburg-builder-cost,
+    .schauenburg-resource-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    #schauenburgBuilderRepairCosts { display: none; }
+
+    #schauenburgBuilderShop.purchased #schauenburgBuilderCosts { display: none; }
+    #schauenburgBuilderShop.purchased #schauenburgBuilderRepairCosts { display: grid; }
+
+    #schauenburgBuilderShop.repairing #schauenburgBuilderKey,
+    #schauenburgBuilderShop.repairing #schauenburgBuilderRepairCosts {
+      opacity: .38;
+      filter: grayscale(1);
+    }
+
+    #schauenburgBuilderUnitWrap {
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    #schauenburgBuilderUnit {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(-3px 4px 4px rgba(0,0,0,.72));
+    }
+
+    #schauenburgResourceCounter {
+      position: absolute;
+      z-index: 14;
+      left: 46%;
+      bottom: 13.7%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(14px, 2vw, 30px);
+      color: #f3efe2;
+      font: 800 clamp(18px, 2vw, 31px)/1 Georgia, serif;
+      text-shadow: 0 2px 2px #000, 0 0 6px #000;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+
+    #schauenburgScreen.active #schauenburgResourceCounter { opacity: 1; }
+
+    .schauenburg-resource-icon,
+    .schauenburg-cost-resource-icon {
+      width: clamp(23px, 2.5vw, 40px);
+      height: auto;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 3px 3px rgba(0,0,0,.72));
+    }
+
+    .schauenburg-cost-resource-icon {
+      width: clamp(18px, 1.9vw, 30px);
+    }
+
+    #schauenburgBuilderDefender {
+      position: absolute;
+      z-index: 8;
+      left: 56%;
+      top: 34%;
+      width: clamp(70px, 8vw, 128px);
+      height: auto;
+      display: none;
+      transform: translate3d(-50%, -100%, 0);
+      transform-origin: 50% 100%;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(0 5px 5px rgba(0,0,0,.68));
+    }
+
+    #schauenburgBuilderDefender.visible { display: block; }
+
     .schauenburg-crossbow-bolt {
       position: absolute;
       z-index: 13;
@@ -2040,31 +2209,59 @@
       <img id="schauenburgHonorIcon" src="schauenburg-ehre-kelch.png" alt="">
     </div>
 
-    <div id="schauenburgCrossbowShop" aria-label="Armbrustschütze kaufen: 40 Gold und 50 Ehre">
-      <span id="schauenburgCrossbowKey">1</span>
-      <span id="schauenburgCrossbowCosts">
-        <span class="schauenburg-crossbow-cost"><span class="schauenburg-gold-coin"></span><span>40</span></span>
-        <span class="schauenburg-crossbow-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-kelch.png" alt=""><span>50</span></span>
+    <div id="schauenburgResourceCounter" aria-label="Baumaterial">
+      <span class="schauenburg-resource-line">
+        <img class="schauenburg-resource-icon" src="schauenburg-holz-symbol.png" alt="">
+        <span id="schauenburgWoodValue">100</span>
       </span>
-      <span id="schauenburgCrossbowUnitWrap">
-        <img id="schauenburgCrossbowUnit" src="schauenburg-armbrust-idle.png" alt="">
+      <span class="schauenburg-resource-line">
+        <img class="schauenburg-resource-icon" src="schauenburg-stein-symbol.png" alt="">
+        <span id="schauenburgStoneValue">100</span>
       </span>
+    </div>
+
+    <div id="schauenburgDefenseShopBar" aria-label="Verteidiger kaufen">
+      <div id="schauenburgCrossbowShop" aria-label="Armbrustschütze kaufen: 40 Gold und 50 Ehre">
+        <span id="schauenburgCrossbowKey">1</span>
+        <span id="schauenburgCrossbowCosts">
+          <span class="schauenburg-crossbow-cost"><span class="schauenburg-gold-coin"></span><span>40</span></span>
+          <span class="schauenburg-crossbow-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-kelch.png" alt=""><span>50</span></span>
+        </span>
+        <span id="schauenburgCrossbowUnitWrap">
+          <img id="schauenburgCrossbowUnit" src="schauenburg-armbrust-idle.png" alt="">
+        </span>
+      </div>
+
+      <div id="schauenburgSpearmanShop" aria-label="Speerträger kaufen: 35 Gold und 40 Ehre">
+        <span id="schauenburgSpearmanKey">2</span>
+        <span id="schauenburgSpearmanCosts">
+          <span class="schauenburg-spearman-cost"><span class="schauenburg-gold-coin"></span><span>35</span></span>
+          <span class="schauenburg-spearman-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-kelch.png" alt=""><span>40</span></span>
+        </span>
+        <span id="schauenburgSpearmanUnitWrap">
+          <img id="schauenburgSpearmanUnit" src="schauenburg-speertraeger-idle.png" alt="">
+        </span>
+      </div>
+
+      <div id="schauenburgBuilderShop" aria-label="Baumeister kaufen: 100 Gold und 200 Ehre">
+        <span id="schauenburgBuilderKey">3</span>
+        <span id="schauenburgBuilderCosts">
+          <span class="schauenburg-builder-cost"><span class="schauenburg-gold-coin"></span><span>100</span></span>
+          <span class="schauenburg-builder-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-kelch.png" alt=""><span>200</span></span>
+        </span>
+        <span id="schauenburgBuilderRepairCosts">
+          <span class="schauenburg-builder-cost"><img class="schauenburg-cost-resource-icon" src="schauenburg-holz-symbol.png" alt=""><span>20</span></span>
+          <span class="schauenburg-builder-cost"><img class="schauenburg-cost-resource-icon" src="schauenburg-stein-symbol.png" alt=""><span>10</span></span>
+        </span>
+        <span id="schauenburgBuilderUnitWrap">
+          <img id="schauenburgBuilderUnit" src="schauenburg-baumeister-idle.png" alt="">
+        </span>
+      </div>
     </div>
 
     <img id="schauenburgCrossbowDefender" src="schauenburg-armbrust-idle.png" alt="">
-
-    <div id="schauenburgSpearmanShop" aria-label="Speerträger kaufen: 35 Gold und 40 Ehre">
-      <span id="schauenburgSpearmanKey">2</span>
-      <span id="schauenburgSpearmanCosts">
-        <span class="schauenburg-spearman-cost"><span class="schauenburg-gold-coin"></span><span>35</span></span>
-        <span class="schauenburg-spearman-cost"><img class="schauenburg-cost-laurel" src="schauenburg-ehre-kelch.png" alt=""><span>40</span></span>
-      </span>
-      <span id="schauenburgSpearmanUnitWrap">
-        <img id="schauenburgSpearmanUnit" src="schauenburg-speertraeger-idle.png" alt="">
-      </span>
-    </div>
-
     <img id="schauenburgSpearmanDefender" src="schauenburg-speertraeger-idle.png" alt="">
+    <img id="schauenburgBuilderDefender" src="schauenburg-baumeister-idle.png" alt="">
 
     <div id="schauenburgEnemyLayer" aria-hidden="true"></div>
     <div id="schauenburgEffectLayer" aria-hidden="true"></div>
@@ -2168,6 +2365,11 @@
     const schauenburgSpearmanShop = document.getElementById("schauenburgSpearmanShop");
     const schauenburgSpearmanUnit = document.getElementById("schauenburgSpearmanUnit");
     const schauenburgSpearmanDefender = document.getElementById("schauenburgSpearmanDefender");
+    const schauenburgBuilderShop = document.getElementById("schauenburgBuilderShop");
+    const schauenburgBuilderUnit = document.getElementById("schauenburgBuilderUnit");
+    const schauenburgBuilderDefender = document.getElementById("schauenburgBuilderDefender");
+    const schauenburgWoodValue = document.getElementById("schauenburgWoodValue");
+    const schauenburgStoneValue = document.getElementById("schauenburgStoneValue");
     const schauenburgGameOverLayer = document.getElementById("schauenburgGameOverLayer");
     const schauenburgEnemyLayer = document.getElementById("schauenburgEnemyLayer");
     const schauenburgEffectLayer = document.getElementById("schauenburgEffectLayer");
@@ -2236,6 +2438,19 @@
     const SCHAUENBURG_SPEARMAN_HONOR_COST = 40;
     let schauenburgSpearmanPurchased = false;
     let schauenburgSpearmanAttackTimer = null;
+
+    const SCHAUENBURG_BUILDER_GOLD_COST = 100;
+    const SCHAUENBURG_BUILDER_HONOR_COST = 200;
+    const SCHAUENBURG_REPAIR_WOOD_COST = 20;
+    const SCHAUENBURG_REPAIR_STONE_COST = 10;
+    const SCHAUENBURG_REPAIR_HEALTH_GAIN = 5;
+    const SCHAUENBURG_REPAIR_DURATION = 10000;
+    let schauenburgWood = 100;
+    let schauenburgStone = 100;
+    let schauenburgBuilderPurchased = false;
+    let schauenburgBuilderRepairing = false;
+    let schauenburgBuilderRepairTimer = null;
+
     let schauenburgGameOverActive = false;
     let schauenburgGameOverTimer = null;
     let schauenburgEnemySequence = 0;
@@ -3092,6 +3307,108 @@
       return killSchauenburgKnightBySpearman(enemy);
     }
 
+
+    function updateSchauenburgResources() {
+      if (schauenburgWoodValue) schauenburgWoodValue.textContent = String(schauenburgWood);
+      if (schauenburgStoneValue) schauenburgStoneValue.textContent = String(schauenburgStone);
+    }
+
+    function resetSchauenburgBuilder() {
+      if (schauenburgBuilderRepairTimer !== null) {
+        window.clearTimeout(schauenburgBuilderRepairTimer);
+        schauenburgBuilderRepairTimer = null;
+      }
+
+      schauenburgBuilderPurchased = false;
+      schauenburgBuilderRepairing = false;
+      schauenburgWood = 100;
+      schauenburgStone = 100;
+
+      if (schauenburgBuilderShop) {
+        schauenburgBuilderShop.classList.remove("purchased", "repairing");
+      }
+
+      if (schauenburgBuilderUnit) {
+        schauenburgBuilderUnit.src = "schauenburg-baumeister-idle.png";
+      }
+
+      if (schauenburgBuilderDefender) {
+        schauenburgBuilderDefender.src = "schauenburg-baumeister-idle.png";
+        schauenburgBuilderDefender.classList.remove("visible");
+      }
+
+      updateSchauenburgResources();
+    }
+
+    function buySchauenburgBuilder() {
+      if (
+        !schauenburgOpen ||
+        schauenburgTransitioning ||
+        schauenburgGameOverActive ||
+        friedrichBockMinigameActive ||
+        schauenburgBuilderPurchased ||
+        schauenburgGold < SCHAUENBURG_BUILDER_GOLD_COST ||
+        schauenburgHonor < SCHAUENBURG_BUILDER_HONOR_COST
+      ) return;
+
+      schauenburgGold -= SCHAUENBURG_BUILDER_GOLD_COST;
+      schauenburgHonor -= SCHAUENBURG_BUILDER_HONOR_COST;
+      schauenburgBuilderPurchased = true;
+
+      updateSchauenburgHonor();
+      schauenburgBuilderShop.classList.add("purchased");
+      schauenburgBuilderDefender.src = "schauenburg-baumeister-idle.png";
+      schauenburgBuilderDefender.classList.add("visible");
+    }
+
+    function startSchauenburgBuilderRepair() {
+      if (
+        !schauenburgOpen ||
+        schauenburgTransitioning ||
+        schauenburgGameOverActive ||
+        friedrichBockMinigameActive ||
+        !schauenburgBuilderPurchased ||
+        schauenburgBuilderRepairing ||
+        schauenburgHealth >= 100 ||
+        schauenburgWood < SCHAUENBURG_REPAIR_WOOD_COST ||
+        schauenburgStone < SCHAUENBURG_REPAIR_STONE_COST
+      ) return;
+
+      schauenburgWood -= SCHAUENBURG_REPAIR_WOOD_COST;
+      schauenburgStone -= SCHAUENBURG_REPAIR_STONE_COST;
+      schauenburgBuilderRepairing = true;
+
+      updateSchauenburgResources();
+      schauenburgBuilderShop.classList.add("repairing");
+      schauenburgBuilderDefender.src = "schauenburg-baumeister-reparatur.png";
+
+      schauenburgBuilderRepairTimer = window.setTimeout(() => {
+        schauenburgBuilderRepairTimer = null;
+        if (
+          !schauenburgBuilderPurchased ||
+          schauenburgGameOverActive ||
+          !schauenburgOpen
+        ) return;
+
+        schauenburgBuilderRepairing = false;
+        schauenburgBuilderShop.classList.remove("repairing");
+        schauenburgBuilderDefender.src = "schauenburg-baumeister-idle.png";
+        schauenburgHealth = Math.min(100, schauenburgHealth + SCHAUENBURG_REPAIR_HEALTH_GAIN);
+        updateSchauenburgHealth();
+
+        /* Exakt derselbe Hammerschlag wie bei korrekter BOCK-Minispieleingabe. */
+        playFriedrichBockOneShot(friedrichBockHammerSound, 0.92);
+      }, SCHAUENBURG_REPAIR_DURATION);
+    }
+
+    function handleSchauenburgBuilderKey() {
+      if (!schauenburgBuilderPurchased) {
+        buySchauenburgBuilder();
+      } else {
+        startSchauenburgBuilderRepair();
+      }
+    }
+
     function registerSchauenburgKill(enemy) {
       if (
         schauenburgGameOverActive ||
@@ -3155,6 +3472,7 @@
             schauenburgHonor = 0;
             schauenburgGold = 420;
             resetSchauenburgCrossbowDefender();
+            resetSchauenburgBuilder();
             updateSchauenburgHealth();
             updateSchauenburgKillCount();
             updateSchauenburgHonor();
@@ -3227,6 +3545,15 @@
         window.clearTimeout(schauenburgSpearmanAttackTimer);
         schauenburgSpearmanAttackTimer = null;
       }
+      if (schauenburgBuilderRepairTimer !== null) {
+        window.clearTimeout(schauenburgBuilderRepairTimer);
+        schauenburgBuilderRepairTimer = null;
+      }
+      schauenburgBuilderRepairing = false;
+      if (schauenburgBuilderShop) schauenburgBuilderShop.classList.remove("repairing");
+      if (schauenburgBuilderDefender && schauenburgBuilderPurchased) {
+        schauenburgBuilderDefender.src = "schauenburg-baumeister-idle.png";
+      }
 
       schauenburgEnemies.forEach(enemy => {
         enemy.cancelled = true;
@@ -3258,6 +3585,7 @@
       schauenburgGold = 420;
       resetSchauenburgCrossbowDefender();
       resetSchauenburgSpearmanDefender();
+      resetSchauenburgBuilder();
       schauenburgEnemySequence = 0;
       schauenburgArcherSequence = 0;
 
@@ -3266,6 +3594,7 @@
 
       updateSchauenburgKillCount();
       updateSchauenburgHonor();
+      updateSchauenburgResources();
       updateSchauenburgHealth();
       scheduleSchauenburgMinute();
       scheduleNextSchauenburgRammbock();
@@ -4832,7 +5161,7 @@
     window.addEventListener("keydown", event => {
       if (!schauenburgOpen || schauenburgTransitioning) return;
 
-      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space", "Digit1", "Numpad1", "Digit2", "Numpad2"].includes(event.code)) {
+      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space", "Digit1", "Numpad1", "Digit2", "Numpad2", "Digit3", "Numpad3"].includes(event.code)) {
         event.preventDefault();
       }
 
@@ -4843,6 +5172,11 @@
 
       if ((event.code === "Digit2" || event.code === "Numpad2") && !event.repeat && !friedrichBockMinigameActive) {
         buySchauenburgSpearmanDefender();
+        return;
+      }
+
+      if ((event.code === "Digit3" || event.code === "Numpad3") && !event.repeat && !friedrichBockMinigameActive) {
+        handleSchauenburgBuilderKey();
         return;
       }
 
