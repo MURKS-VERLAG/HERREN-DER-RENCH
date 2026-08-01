@@ -1757,6 +1757,158 @@
 
     #schauenburgGameOverLayer.show-image #schauenburgDefeatImage { opacity: 1; }
 
+
+    /* Wirtschaftsgebäude: Landschaftsmotive, Shop rechts zwischen HUD und Schreiber. */
+    #schauenburgBuildingLayer {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .schauenburg-building {
+      position: absolute;
+      display: none;
+      height: auto;
+      object-fit: contain;
+      transform: translate3d(-50%, -100%, 0);
+      transform-origin: 50% 100%;
+      filter: drop-shadow(0 5px 5px rgba(0,0,0,.58));
+      transition: opacity 380ms ease, transform 380ms ease;
+    }
+
+    .schauenburg-building.visible { display: block; }
+    .schauenburg-building.destroying {
+      opacity: 0;
+      transform: translate3d(-50%, -92%, 0) scale(.86) rotate(-2deg);
+    }
+
+    #schauenburgLumberjackBuilding {
+      left: 47.0%;
+      top: 70.5%;
+      width: clamp(82px, 9.0vw, 145px);
+    }
+
+    #schauenburgFarmBuilding {
+      left: 57.7%;
+      top: 72.0%;
+      width: clamp(92px, 10.2vw, 165px);
+    }
+
+    #schauenburgQuarryBuilding {
+      left: 68.2%;
+      top: 70.7%;
+      width: clamp(94px, 10.5vw, 170px);
+    }
+
+    #schauenburgBuildingShop {
+      position: absolute;
+      z-index: 14;
+      right: .45%;
+      top: 18.2%;
+      width: clamp(115px, 11.2vw, 182px);
+      display: grid;
+      gap: clamp(5px, .55vw, 9px);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+
+    #schauenburgScreen.active #schauenburgBuildingShop { opacity: 1; }
+
+    .schauenburg-building-shop-item {
+      min-height: clamp(68px, 7.5vw, 112px);
+      display: grid;
+      grid-template-columns: clamp(23px, 2.1vw, 34px) 1fr clamp(43px, 4.2vw, 68px);
+      align-items: center;
+      gap: clamp(3px, .35vw, 6px);
+    }
+
+    .schauenburg-building-key {
+      width: clamp(23px, 2.1vw, 34px);
+      height: clamp(23px, 2.1vw, 34px);
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(225,220,205,.92);
+      outline: 2px solid rgba(20,20,18,.96);
+      background: rgba(12,12,11,.86);
+      color: #f3efe2;
+      font: 800 clamp(15px, 1.6vw, 24px)/1 Georgia, serif;
+      box-shadow: 0 3px 8px rgba(0,0,0,.72);
+    }
+
+    .schauenburg-building-costs {
+      display: grid;
+      gap: 2px;
+      color: #f3efe2;
+      font: 800 clamp(11px, 1.12vw, 18px)/1 Georgia, serif;
+      text-shadow: 0 2px 2px #000, 0 0 5px #000;
+    }
+
+    .schauenburg-building-cost {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+    }
+
+    .schauenburg-building-cost img {
+      width: clamp(14px, 1.35vw, 22px);
+      height: auto;
+      object-fit: contain;
+    }
+
+    .schauenburg-building-shop-image {
+      width: clamp(43px, 4.2vw, 68px);
+      max-height: clamp(62px, 6.8vw, 104px);
+      object-fit: contain;
+      filter: drop-shadow(-2px 3px 3px rgba(0,0,0,.72));
+    }
+
+    .schauenburg-building-shop-item.purchased .schauenburg-building-key,
+    .schauenburg-building-shop-item.purchased .schauenburg-building-costs {
+      opacity: .35;
+      filter: grayscale(1);
+    }
+
+    .schauenburg-production-popup {
+      position: absolute;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #fff4c9;
+      font: 900 clamp(17px, 1.8vw, 29px)/1 Georgia, serif;
+      text-shadow: 0 2px 2px #000, 0 0 7px #000;
+      pointer-events: none;
+      animation: schauenburgProductionRise 1450ms ease-out forwards;
+    }
+
+    .schauenburg-production-popup img {
+      width: clamp(23px, 2.5vw, 40px);
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 3px 3px rgba(0,0,0,.72));
+    }
+
+    @keyframes schauenburgProductionRise {
+      0% { opacity: 0; transform: translate3d(-50%, 0, 0) scale(.85); }
+      15% { opacity: 1; }
+      75% { opacity: 1; }
+      100% { opacity: 0; transform: translate3d(-50%, -42px, 0) scale(1.04); }
+    }
+
+    .schauenburg-building-hit {
+      animation: schauenburgBuildingHit 260ms ease-out;
+    }
+
+    @keyframes schauenburgBuildingHit {
+      0% { filter: brightness(1.8) drop-shadow(0 5px 5px rgba(0,0,0,.58)); }
+      100% { filter: brightness(1) drop-shadow(0 5px 5px rgba(0,0,0,.58)); }
+    }
+
     #schauenburgEnemyLayer,
     #schauenburgEffectLayer {
       position: absolute;
@@ -2218,6 +2370,10 @@
         <img class="schauenburg-resource-icon" src="schauenburg-stein-symbol.png" alt="">
         <span id="schauenburgStoneValue">100</span>
       </span>
+      <span class="schauenburg-resource-line">
+        <img class="schauenburg-resource-icon" src="schauenburg-nahrung-apfel.png" alt="">
+        <span id="schauenburgFoodValue">0</span>
+      </span>
     </div>
 
     <div id="schauenburgDefenseShopBar" aria-label="Verteidiger kaufen">
@@ -2262,6 +2418,42 @@
     <img id="schauenburgCrossbowDefender" src="schauenburg-armbrust-idle.png" alt="">
     <img id="schauenburgSpearmanDefender" src="schauenburg-speertraeger-idle.png" alt="">
     <img id="schauenburgBuilderDefender" src="schauenburg-baumeister-idle.png" alt="">
+
+    <div id="schauenburgBuildingShop" aria-label="Wirtschaftsgebäude kaufen">
+      <div id="schauenburgLumberjackShop" class="schauenburg-building-shop-item">
+        <span class="schauenburg-building-key">4</span>
+        <span class="schauenburg-building-costs">
+          <span class="schauenburg-building-cost"><span class="schauenburg-gold-coin"></span><span>50</span></span>
+        </span>
+        <img class="schauenburg-building-shop-image" src="schauenburg-holzfaeller.png" alt="">
+      </div>
+
+      <div id="schauenburgFarmShop" class="schauenburg-building-shop-item">
+        <span class="schauenburg-building-key">5</span>
+        <span class="schauenburg-building-costs">
+          <span class="schauenburg-building-cost"><span class="schauenburg-gold-coin"></span><span>100</span></span>
+          <span class="schauenburg-building-cost"><img src="schauenburg-ehre-kelch.png" alt=""><span>50</span></span>
+          <span class="schauenburg-building-cost"><img src="schauenburg-stein-symbol.png" alt=""><span>50</span></span>
+          <span class="schauenburg-building-cost"><img src="schauenburg-holz-symbol.png" alt=""><span>100</span></span>
+        </span>
+        <img class="schauenburg-building-shop-image" src="schauenburg-gutshof.png" alt="">
+      </div>
+
+      <div id="schauenburgQuarryShop" class="schauenburg-building-shop-item">
+        <span class="schauenburg-building-key">6</span>
+        <span class="schauenburg-building-costs">
+          <span class="schauenburg-building-cost"><span class="schauenburg-gold-coin"></span><span>150</span></span>
+          <span class="schauenburg-building-cost"><img src="schauenburg-holz-symbol.png" alt=""><span>100</span></span>
+        </span>
+        <img class="schauenburg-building-shop-image" src="schauenburg-steinbruch.png" alt="">
+      </div>
+    </div>
+
+    <div id="schauenburgBuildingLayer" aria-hidden="true">
+      <img id="schauenburgLumberjackBuilding" class="schauenburg-building" src="schauenburg-holzfaeller.png" alt="">
+      <img id="schauenburgFarmBuilding" class="schauenburg-building" src="schauenburg-gutshof.png" alt="">
+      <img id="schauenburgQuarryBuilding" class="schauenburg-building" src="schauenburg-steinbruch.png" alt="">
+    </div>
 
     <div id="schauenburgEnemyLayer" aria-hidden="true"></div>
     <div id="schauenburgEffectLayer" aria-hidden="true"></div>
@@ -2370,6 +2562,13 @@
     const schauenburgBuilderDefender = document.getElementById("schauenburgBuilderDefender");
     const schauenburgWoodValue = document.getElementById("schauenburgWoodValue");
     const schauenburgStoneValue = document.getElementById("schauenburgStoneValue");
+    const schauenburgFoodValue = document.getElementById("schauenburgFoodValue");
+    const schauenburgLumberjackShop = document.getElementById("schauenburgLumberjackShop");
+    const schauenburgFarmShop = document.getElementById("schauenburgFarmShop");
+    const schauenburgQuarryShop = document.getElementById("schauenburgQuarryShop");
+    const schauenburgLumberjackBuilding = document.getElementById("schauenburgLumberjackBuilding");
+    const schauenburgFarmBuilding = document.getElementById("schauenburgFarmBuilding");
+    const schauenburgQuarryBuilding = document.getElementById("schauenburgQuarryBuilding");
     const schauenburgGameOverLayer = document.getElementById("schauenburgGameOverLayer");
     const schauenburgEnemyLayer = document.getElementById("schauenburgEnemyLayer");
     const schauenburgEffectLayer = document.getElementById("schauenburgEffectLayer");
@@ -2451,6 +2650,25 @@
     let schauenburgBuilderRepairing = false;
     let schauenburgBuilderRepairTimer = null;
 
+    const SCHAUENBURG_BUILDING_PRODUCTION_INTERVAL = 20000;
+    const SCHAUENBURG_BUILDING_ATTACK_INTERVAL = 2000;
+    let schauenburgFood = 0;
+    let schauenburgBuildingCollisionTimer = null;
+    const schauenburgBuildings = {
+      lumberjack: {
+        purchased: false, health: 5, maxHealth: 5, productionTimer: null,
+        element: null, shop: null, x: 0.47, y: 0.705
+      },
+      farm: {
+        purchased: false, health: 5, maxHealth: 5, productionTimer: null,
+        element: null, shop: null, x: 0.577, y: 0.72
+      },
+      quarry: {
+        purchased: false, health: 5, maxHealth: 5, productionTimer: null,
+        element: null, shop: null, x: 0.682, y: 0.707
+      }
+    };
+
     let schauenburgGameOverActive = false;
     let schauenburgGameOverTimer = null;
     let schauenburgEnemySequence = 0;
@@ -2511,6 +2729,8 @@
     let spaceHeld = false;
     let spaceHoldTimer = null;
     let maceGroundState = false;
+
+    initializeSchauenburgBuildingReferences();
 
     musicOne.volume = 0;
     musicTwo.volume = 0;
@@ -3308,9 +3528,279 @@
     }
 
 
+
+    function initializeSchauenburgBuildingReferences() {
+      schauenburgBuildings.lumberjack.element = schauenburgLumberjackBuilding;
+      schauenburgBuildings.lumberjack.shop = schauenburgLumberjackShop;
+      schauenburgBuildings.farm.element = schauenburgFarmBuilding;
+      schauenburgBuildings.farm.shop = schauenburgFarmShop;
+      schauenburgBuildings.quarry.element = schauenburgQuarryBuilding;
+      schauenburgBuildings.quarry.shop = schauenburgQuarryShop;
+    }
+
+    function updateSchauenburgFood() {
+      if (schauenburgFoodValue) schauenburgFoodValue.textContent = String(schauenburgFood);
+    }
+
+    function showSchauenburgProductionPopup(type, icon, amount, offsetX = 0) {
+      const building = schauenburgBuildings[type];
+      if (!building || !building.purchased || !schauenburgEffectLayer) return;
+
+      const popup = document.createElement("div");
+      popup.className = "schauenburg-production-popup";
+      popup.style.left = `${(building.x + offsetX) * 100}%`;
+      popup.style.top = `${(building.y - 0.12) * 100}%`;
+      popup.innerHTML = `<img src="${icon}" alt=""><span>+${amount}</span>`;
+      schauenburgEffectLayer.appendChild(popup);
+      window.setTimeout(() => popup.remove(), 1500);
+    }
+
+    function stopSchauenburgBuildingProduction(type) {
+      const building = schauenburgBuildings[type];
+      if (!building || building.productionTimer === null) return;
+      window.clearTimeout(building.productionTimer);
+      building.productionTimer = null;
+    }
+
+    function scheduleSchauenburgBuildingProduction(type) {
+      const building = schauenburgBuildings[type];
+      if (!building || !building.purchased || schauenburgGameOverActive) return;
+      stopSchauenburgBuildingProduction(type);
+
+      building.productionTimer = window.setTimeout(() => {
+        building.productionTimer = null;
+        if (!building.purchased || !schauenburgOpen || schauenburgGameOverActive) return;
+
+        if (type === "lumberjack") {
+          schauenburgWood += 20;
+          showSchauenburgProductionPopup(type, "schauenburg-holz-symbol.png", 20);
+        } else if (type === "farm") {
+          schauenburgFood += 10;
+          schauenburgGold += 10;
+          showSchauenburgProductionPopup(type, "schauenburg-nahrung-apfel.png", 10, -0.018);
+          showSchauenburgProductionPopup(type, "schauenburg-ehre-kelch.png", 10, 0.022);
+        } else if (type === "quarry") {
+          schauenburgStone += 5;
+          showSchauenburgProductionPopup(type, "schauenburg-stein-symbol.png", 5);
+        }
+
+        updateSchauenburgResources();
+        updateSchauenburgFood();
+        updateSchauenburgHonor();
+        scheduleSchauenburgBuildingProduction(type);
+      }, SCHAUENBURG_BUILDING_PRODUCTION_INTERVAL);
+    }
+
+    function buySchauenburgBuilding(type) {
+      const building = schauenburgBuildings[type];
+      if (
+        !building ||
+        building.purchased ||
+        !schauenburgOpen ||
+        schauenburgTransitioning ||
+        schauenburgGameOverActive ||
+        friedrichBockMinigameActive
+      ) return;
+
+      let affordable = false;
+      if (type === "lumberjack") {
+        affordable = schauenburgGold >= 50;
+      } else if (type === "farm") {
+        affordable =
+          schauenburgGold >= 100 &&
+          schauenburgHonor >= 50 &&
+          schauenburgStone >= 50 &&
+          schauenburgWood >= 100;
+      } else if (type === "quarry") {
+        affordable = schauenburgGold >= 150 && schauenburgWood >= 100;
+      }
+      if (!affordable) return;
+
+      if (type === "lumberjack") {
+        schauenburgGold -= 50;
+      } else if (type === "farm") {
+        schauenburgGold -= 100;
+        schauenburgHonor -= 50;
+        schauenburgStone -= 50;
+        schauenburgWood -= 100;
+      } else if (type === "quarry") {
+        schauenburgGold -= 150;
+        schauenburgWood -= 100;
+      }
+
+      building.purchased = true;
+      building.health = building.maxHealth;
+      building.element.classList.remove("destroying");
+      building.element.classList.add("visible");
+      building.shop.classList.add("purchased");
+
+      updateSchauenburgHonor();
+      updateSchauenburgResources();
+      scheduleSchauenburgBuildingProduction(type);
+    }
+
+    function releaseEnemyFromBuilding(enemy) {
+      if (!enemy) return;
+      if (enemy.buildingAttackTimer !== null && enemy.buildingAttackTimer !== undefined) {
+        window.clearTimeout(enemy.buildingAttackTimer);
+        enemy.buildingAttackTimer = null;
+      }
+      enemy.blockedByBuilding = null;
+      if (!enemy.cancelled && enemy.state === "building") {
+        enemy.state = "running";
+        if (enemy.animation) enemy.animation.play();
+      }
+    }
+
+    function destroySchauenburgBuilding(type) {
+      const building = schauenburgBuildings[type];
+      if (!building || !building.purchased) return;
+
+      building.purchased = false;
+      building.health = 0;
+      stopSchauenburgBuildingProduction(type);
+      building.shop.classList.remove("purchased");
+      building.element.classList.add("destroying");
+
+      for (const enemy of schauenburgEnemies.values()) {
+        if (enemy.blockedByBuilding === type) releaseEnemyFromBuilding(enemy);
+      }
+
+      window.setTimeout(() => {
+        building.element.classList.remove("visible", "destroying", "schauenburg-building-hit");
+      }, 420);
+    }
+
+    function damageSchauenburgBuilding(type, enemy) {
+      const building = schauenburgBuildings[type];
+      if (!building || !building.purchased || building.health <= 0) {
+        releaseEnemyFromBuilding(enemy);
+        return;
+      }
+
+      building.health -= 1;
+      building.element.classList.remove("schauenburg-building-hit");
+      void building.element.offsetWidth;
+      building.element.classList.add("schauenburg-building-hit");
+
+      if (enemy.kind === "rammbock") {
+        createSchauenburgRammbockDust(building.x, building.y);
+      } else {
+        createSchauenburgDust(building.x, building.y);
+      }
+
+      if (!isMuted && schauenburgPickaxe) {
+        const impact = schauenburgPickaxe.cloneNode();
+        impact.volume = enemy.kind === "rammbock" ? 0.82 : 0.58;
+        impact.play().catch(() => {});
+      }
+
+      if (building.health <= 0) {
+        destroySchauenburgBuilding(type);
+        return;
+      }
+
+      enemy.buildingAttackTimer = window.setTimeout(() => {
+        enemy.buildingAttackTimer = null;
+        if (
+          !enemy.cancelled &&
+          enemy.state === "building" &&
+          enemy.blockedByBuilding === type
+        ) damageSchauenburgBuilding(type, enemy);
+      }, SCHAUENBURG_BUILDING_ATTACK_INTERVAL);
+    }
+
+    function startEnemyBuildingAttack(enemy, type) {
+      const building = schauenburgBuildings[type];
+      if (
+        !enemy ||
+        !building ||
+        !building.purchased ||
+        enemy.cancelled ||
+        enemy.state !== "running"
+      ) return;
+
+      enemy.state = "building";
+      enemy.blockedByBuilding = type;
+      if (enemy.animation) enemy.animation.pause();
+
+      const screenRect = schauenburgScreen.getBoundingClientRect();
+      const rect = enemy.element.getBoundingClientRect();
+      enemy.element.style.left = `${rect.left - screenRect.left + rect.width * 0.5}px`;
+      enemy.element.style.top = `${rect.bottom - screenRect.top}px`;
+      enemy.element.style.transform = "translate3d(-50%,-100%,0) scale(1)";
+      enemy.element.classList.add("at-wall");
+
+      damageSchauenburgBuilding(type, enemy);
+    }
+
+    function checkSchauenburgBuildingCollisions() {
+      if (!schauenburgOpen || schauenburgGameOverActive) return;
+
+      for (const enemy of schauenburgEnemies.values()) {
+        if (
+          !enemy ||
+          enemy.cancelled ||
+          enemy.state !== "running" ||
+          (enemy.kind !== "ritter" && enemy.kind !== "rammbock") ||
+          !enemy.element
+        ) continue;
+
+        const enemyRect = enemy.element.getBoundingClientRect();
+
+        for (const type of ["lumberjack", "farm", "quarry"]) {
+          const building = schauenburgBuildings[type];
+          if (!building.purchased || !building.element.classList.contains("visible")) continue;
+
+          const rect = building.element.getBoundingClientRect();
+          const overlaps =
+            enemyRect.right > rect.left + rect.width * 0.18 &&
+            enemyRect.left < rect.right - rect.width * 0.18 &&
+            enemyRect.bottom > rect.top + rect.height * 0.35 &&
+            enemyRect.top < rect.bottom - rect.height * 0.08;
+
+          if (overlaps) {
+            startEnemyBuildingAttack(enemy, type);
+            break;
+          }
+        }
+      }
+    }
+
+    function startSchauenburgBuildingCollisionWatch() {
+      if (schauenburgBuildingCollisionTimer !== null) {
+        window.clearInterval(schauenburgBuildingCollisionTimer);
+      }
+      schauenburgBuildingCollisionTimer = window.setInterval(
+        checkSchauenburgBuildingCollisions,
+        90
+      );
+    }
+
+    function resetSchauenburgBuildings() {
+      if (schauenburgBuildingCollisionTimer !== null) {
+        window.clearInterval(schauenburgBuildingCollisionTimer);
+        schauenburgBuildingCollisionTimer = null;
+      }
+
+      schauenburgFood = 0;
+      for (const type of ["lumberjack", "farm", "quarry"]) {
+        const building = schauenburgBuildings[type];
+        stopSchauenburgBuildingProduction(type);
+        building.purchased = false;
+        building.health = building.maxHealth;
+        if (building.element) {
+          building.element.classList.remove("visible", "destroying", "schauenburg-building-hit");
+        }
+        if (building.shop) building.shop.classList.remove("purchased");
+      }
+      updateSchauenburgFood();
+    }
+
     function updateSchauenburgResources() {
       if (schauenburgWoodValue) schauenburgWoodValue.textContent = String(schauenburgWood);
       if (schauenburgStoneValue) schauenburgStoneValue.textContent = String(schauenburgStone);
+      updateSchauenburgFood();
     }
 
     function resetSchauenburgBuilder() {
@@ -3473,6 +3963,7 @@
             schauenburgGold = 420;
             resetSchauenburgCrossbowDefender();
             resetSchauenburgBuilder();
+            resetSchauenburgBuildings();
             updateSchauenburgHealth();
             updateSchauenburgKillCount();
             updateSchauenburgHonor();
@@ -3554,6 +4045,13 @@
       if (schauenburgBuilderDefender && schauenburgBuilderPurchased) {
         schauenburgBuilderDefender.src = "schauenburg-baumeister-idle.png";
       }
+      if (schauenburgBuildingCollisionTimer !== null) {
+        window.clearInterval(schauenburgBuildingCollisionTimer);
+        schauenburgBuildingCollisionTimer = null;
+      }
+      for (const type of ["lumberjack", "farm", "quarry"]) {
+        stopSchauenburgBuildingProduction(type);
+      }
 
       schauenburgEnemies.forEach(enemy => {
         enemy.cancelled = true;
@@ -3561,6 +4059,10 @@
         if (enemy.shotTimer !== null && enemy.shotTimer !== undefined) {
           window.clearTimeout(enemy.shotTimer);
           enemy.shotTimer = null;
+        }
+        if (enemy.buildingAttackTimer !== null && enemy.buildingAttackTimer !== undefined) {
+          window.clearTimeout(enemy.buildingAttackTimer);
+          enemy.buildingAttackTimer = null;
         }
         if (enemy.element) enemy.element.remove();
       });
@@ -3586,6 +4088,7 @@
       resetSchauenburgCrossbowDefender();
       resetSchauenburgSpearmanDefender();
       resetSchauenburgBuilder();
+      resetSchauenburgBuildings();
       schauenburgEnemySequence = 0;
       schauenburgArcherSequence = 0;
 
@@ -3601,6 +4104,7 @@
       scheduleNextSchauenburgCannonShot();
       scheduleSchauenburgArcherMinute();
       scheduleNextFriedrichBockEvent();
+      startSchauenburgBuildingCollisionWatch();
     }
 
     function createRandomMinuteSpawnTimes() {
@@ -4425,6 +4929,8 @@
         killCounted: false,
         cancelled: false,
         animation: null,
+        blockedByBuilding: null,
+        buildingAttackTimer: null,
         route
       };
       schauenburgEnemies.set(id, enemy);
@@ -4457,7 +4963,7 @@
     }
 
     function hitSchauenburgRammbock(enemy) {
-      if (!enemy || enemy.kind !== "rammbock" || enemy.state !== "running" || !enemy.element) return;
+      if (!enemy || enemy.kind !== "rammbock" || (enemy.state !== "running" && enemy.state !== "building") || !enemy.element) return;
 
       enemy.hits += 1;
 
@@ -4595,6 +5101,8 @@
         killCounted: false,
         cancelled: false,
         animation: null,
+        blockedByBuilding: null,
+        buildingAttackTimer: null,
         route
       };
       schauenburgEnemies.set(id, enemy);
@@ -4690,7 +5198,7 @@
         schauenburgGameOverActive ||
         !enemy ||
         !enemy.element ||
-        (enemy.state !== "running" && enemy.state !== "shooting")
+        (enemy.state !== "running" && enemy.state !== "shooting" && enemy.state !== "building")
       ) return;
 
       if (enemy.kind === "rammbock") {
@@ -4748,6 +5256,10 @@
         window.clearTimeout(enemy.shotTimer);
         enemy.shotTimer = null;
       }
+      if (enemy.buildingAttackTimer !== null && enemy.buildingAttackTimer !== undefined) {
+        window.clearTimeout(enemy.buildingAttackTimer);
+        enemy.buildingAttackTimer = null;
+      }
       if (enemy.element) enemy.element.remove();
       schauenburgEnemies.delete(enemy.id);
     }
@@ -4759,7 +5271,7 @@
 
       for (const enemy of schauenburgEnemies.values()) {
         if (
-          (enemy.state !== "running" && enemy.state !== "shooting") ||
+          (enemy.state !== "running" && enemy.state !== "shooting" && enemy.state !== "building") ||
           !enemy.element
         ) continue;
 
@@ -5161,7 +5673,7 @@
     window.addEventListener("keydown", event => {
       if (!schauenburgOpen || schauenburgTransitioning) return;
 
-      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space", "Digit1", "Numpad1", "Digit2", "Numpad2", "Digit3", "Numpad3"].includes(event.code)) {
+      if (["KeyW", "KeyA", "KeyS", "KeyD", "Space", "Digit1", "Numpad1", "Digit2", "Numpad2", "Digit3", "Numpad3", "Digit4", "Numpad4", "Digit5", "Numpad5", "Digit6", "Numpad6"].includes(event.code)) {
         event.preventDefault();
       }
 
@@ -5177,6 +5689,21 @@
 
       if ((event.code === "Digit3" || event.code === "Numpad3") && !event.repeat && !friedrichBockMinigameActive) {
         handleSchauenburgBuilderKey();
+        return;
+      }
+
+      if ((event.code === "Digit4" || event.code === "Numpad4") && !event.repeat && !friedrichBockMinigameActive) {
+        buySchauenburgBuilding("lumberjack");
+        return;
+      }
+
+      if ((event.code === "Digit5" || event.code === "Numpad5") && !event.repeat && !friedrichBockMinigameActive) {
+        buySchauenburgBuilding("farm");
+        return;
+      }
+
+      if ((event.code === "Digit6" || event.code === "Numpad6") && !event.repeat && !friedrichBockMinigameActive) {
+        buySchauenburgBuilding("quarry");
         return;
       }
 
